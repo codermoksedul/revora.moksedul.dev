@@ -83,7 +83,8 @@ class Revora_DB {
 	 */
 	public function insert_review( $data ) {
 		global $wpdb;
-		return $wpdb->insert( $this->table_name, $data );
+		$inserted = $wpdb->insert( $this->table_name, $data );
+		return $inserted ? $wpdb->insert_id : false;
 	}
 
 	/**
@@ -204,7 +205,8 @@ class Revora_DB {
 
 	public function insert_category( $data ) {
 		global $wpdb;
-		return $wpdb->insert( $this->cat_table, $data );
+		$inserted = $wpdb->insert( $this->cat_table, $data );
+		return $inserted ? $wpdb->insert_id : false;
 	}
 
 	public function get_categories( $args = array() ) {
@@ -261,5 +263,35 @@ class Revora_DB {
 	public function get_review_categories( $review_id ) {
 		global $wpdb;
 		return $wpdb->get_col( $wpdb->prepare( "SELECT cat_id FROM $this->rel_table WHERE review_id = %d", $review_id ) );
+	}
+
+	public function duplicate_review( $id ) {
+		global $wpdb;
+		
+		$review = $this->get_review( $id );
+		if ( ! $review ) {
+			return false;
+		}
+
+		$data = array(
+			'category_slug' => $review->category_slug,
+			'name'          => $review->name,
+			'email'         => $review->email,
+			'rating'        => $review->rating,
+			'title'         => $review->title . ' (Copy)',
+			'content'       => $review->content,
+			'ip_address'    => $review->ip_address,
+			'status'        => $review->status,
+		);
+
+		$inserted = $this->insert_review( $data );
+		if ( $inserted ) {
+			// Duplicate category relationships
+			$categories = $this->get_review_categories( $id );
+			$this->set_review_categories( $inserted, $categories );
+			return $inserted;
+		}
+
+		return false;
 	}
 }

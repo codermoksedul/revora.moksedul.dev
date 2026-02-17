@@ -167,6 +167,39 @@ class Revora_Admin {
 			wp_redirect( admin_url( 'admin.php?page=revora-categories&message=deleted' ) );
 			exit;
 		}
+
+		// Handle Review Duplicate
+		if ( isset( $_GET['action'] ) && 'duplicate' === $_GET['action'] && isset( $_GET['review_id'] ) ) {
+			$db = new Revora_DB();
+			$db->duplicate_review( intval( $_GET['review_id'] ) );
+			wp_redirect( admin_url( 'admin.php?page=revora&message=duplicated' ) );
+			exit;
+		}
+
+		// Handle Review Actions (Approve/Reject/Delete)
+		if ( isset( $_GET['action'] ) && isset( $_GET['review_id'] ) ) {
+			$id     = intval( $_GET['review_id'] );
+			$action = $_GET['action'];
+			$db     = new Revora_DB();
+
+			if ( 'approve' === $action ) {
+				$db->update_review( $id, array( 'status' => 'approved' ) );
+				wp_redirect( admin_url( 'admin.php?page=revora&message=approved' ) );
+				exit;
+			}
+
+			if ( 'reject' === $action ) {
+				$db->update_review( $id, array( 'status' => 'rejected' ) );
+				wp_redirect( admin_url( 'admin.php?page=revora&message=rejected' ) );
+				exit;
+			}
+
+			if ( 'delete' === $action ) {
+				$db->delete_review( $id );
+				wp_redirect( admin_url( 'admin.php?page=revora&message=deleted' ) );
+				exit;
+			}
+		}
 	}
 
 	/**
@@ -181,8 +214,8 @@ class Revora_Admin {
 			return;
 		}
 
-		if ( 'edit' === $action && isset( $_GET['review'] ) ) {
-			$this->render_edit_page( intval( $_GET['review'] ) );
+		if ( 'edit' === $action && isset( $_GET['review_id'] ) ) {
+			$this->render_edit_page( intval( $_GET['review_id'] ) );
 			return;
 		}
 
@@ -195,6 +228,14 @@ class Revora_Admin {
 			$message = '<div class="updated notice is-dismissible"><p>' . __( 'Review added successfully.', 'revora' ) . '</p></div>';
 		} elseif ( isset( $_REQUEST['message'] ) && 'updated' === $_REQUEST['message'] ) {
 			$message = '<div class="updated notice is-dismissible"><p>' . __( 'Review updated successfully.', 'revora' ) . '</p></div>';
+		} elseif ( isset( $_REQUEST['message'] ) && 'approved' === $_REQUEST['message'] ) {
+			$message = '<div class="updated notice is-dismissible"><p>' . __( 'Review approved successfully.', 'revora' ) . '</p></div>';
+		} elseif ( isset( $_REQUEST['message'] ) && 'rejected' === $_REQUEST['message'] ) {
+			$message = '<div class="updated notice is-dismissible"><p>' . __( 'Review rejected successfully.', 'revora' ) . '</p></div>';
+		} elseif ( isset( $_REQUEST['message'] ) && 'deleted' === $_REQUEST['message'] ) {
+			$message = '<div class="updated notice is-dismissible"><p>' . __( 'Review deleted successfully.', 'revora' ) . '</p></div>';
+		} elseif ( isset( $_REQUEST['message'] ) && 'duplicated' === $_REQUEST['message'] ) {
+			$message = '<div class="updated notice is-dismissible"><p>' . __( 'Review duplicated successfully.', 'revora' ) . '</p></div>';
 		}
 
 		if ( isset( $_REQUEST['action'] ) && -1 != $_REQUEST['action'] && ! in_array( $_REQUEST['action'], array( 'add' ) ) ) {
@@ -643,13 +684,12 @@ class Revora_Review_List_Table extends WP_List_Table {
 
 	public function get_columns() {
 		return array(
-			'cb'            => '<input type="checkbox" />',
-			'rating'     => __( 'Rating', 'revora' ),
+			'cb'         => '<input type="checkbox" />',
 			'content'    => __( 'Review', 'revora' ),
 			'author'     => __( 'Author', 'revora' ),
 			'categories' => __( 'Categories', 'revora' ),
 			'status'     => __( 'Status', 'revora' ),
-			'created_at'    => __( 'Date', 'revora' ),
+			'created_at' => __( 'Date', 'revora' ),
 		);
 	}
 
@@ -672,37 +712,38 @@ class Revora_Review_List_Table extends WP_List_Table {
 		return sprintf( '<input type="checkbox" name="review[]" value="%s" />', $item->id );
 	}
 
-	public function column_rating( $item ) {
-		$output = '<div class="revora-admin-stars">';
-		for ( $i = 1; $i <= 5; $i++ ) {
-			$class = ( $i <= $item->rating ) ? 'star-filled' : 'star-empty';
-			$output .= '<span class="dashicons dashicons-star-filled ' . $class . '"></span>';
-		}
-		$output .= '</div>';
-		return $output;
-	}
 
 	public function column_content( $item ) {
 		$actions = array(
-			'edit'    => sprintf( '<a href="?page=%s&action=%s&review=%s">%s</a>', $_REQUEST['page'], 'edit', $item->id, __( 'Edit', 'revora' ) ),
-			'approve' => sprintf( '<a href="?page=%s&action=%s&review=%s">%s</a>', $_REQUEST['page'], 'approve', $item->id, __( 'Approve', 'revora' ) ),
-			'reject'  => sprintf( '<a href="?page=%s&action=%s&review=%s">%s</a>', $_REQUEST['page'], 'reject', $item->id, __( 'Reject', 'revora' ) ),
-			'delete'  => sprintf( '<a href="?page=%s&action=%s&review=%s">%s</a>', $_REQUEST['page'], 'delete', $item->id, __( 'Delete', 'revora' ) ),
+			'edit'      => sprintf( '<a href="?page=%s&action=%s&review_id=%s">%s</a>', 'revora', 'edit', $item->id, __( 'Edit', 'revora' ) ),
+			'duplicate' => sprintf( '<a href="?page=%s&action=%s&review_id=%s">%s</a>', 'revora', 'duplicate', $item->id, __( 'Duplicate', 'revora' ) ),
+			'approve'   => sprintf( '<a href="?page=%s&action=%s&review_id=%s">%s</a>', 'revora', 'approve', $item->id, __( 'Approve', 'revora' ) ),
+			'reject'    => sprintf( '<a href="?page=%s&action=%s&review_id=%s">%s</a>', 'revora', 'reject', $item->id, __( 'Reject', 'revora' ) ),
+			'delete'    => sprintf( '<a href="?page=%s&action=%s&review_id=%s" onclick="return confirm(\'Are you sure?\')">%s</a>', 'revora', 'delete', $item->id, __( 'Delete', 'revora' ) ),
 		);
 
 		// Remove irrelevant actions based on status
 		if ( 'approved' === $item->status ) unset( $actions['approve'] );
 		if ( 'rejected' === $item->status ) unset( $actions['reject'] );
 
-		return sprintf( '<strong>%s</strong><p>%s</p>%s',
+		// Star Rating
+		$stars = '<div class="revora-admin-stars" style="margin-bottom: 5px;">';
+		for ( $i = 1; $i <= 5; $i++ ) {
+			$class = ( $i <= $item->rating ) ? 'star-filled' : 'star-empty';
+			$stars .= '<span class="dashicons dashicons-star-filled ' . $class . '"></span>';
+		}
+		$stars .= '</div>';
+
+		return sprintf( '%s <strong>%s</strong><br>%s%s',
+			$stars,
 			esc_html( $item->title ),
-			esc_html( $item->content ),
+			wp_trim_words( esc_html( $item->content ), 15 ),
 			$this->row_actions( $actions )
 		);
 	}
 
 	public function column_author( $item ) {
-		return sprintf( '<strong>%s</strong><br>%s<br><small>IP: %s</small>',
+		return sprintf( '<strong>%s</strong><br><small>%s</small><br><small>IP: %s</small>',
 			esc_html( $item->name ),
 			esc_html( $item->email ),
 			esc_html( $item->ip_address )
