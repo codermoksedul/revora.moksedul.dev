@@ -138,6 +138,75 @@
     background: #fff;
 }
 
+/* Quick Edit Row */
+.revora-quick-row td {
+    background: #f1f1f1;
+    padding: 15px !important;
+    border-bottom: 2px solid #007cba !important;
+}
+
+.revora-quick-edit-form {
+    display: flex;
+    gap: 20px;
+    align-items: flex-end;
+}
+
+.revora-quick-edit-form .revora-field-group {
+    margin-bottom: 0;
+}
+
+.revora-quick-edit-form .revora-rating-selector .dashicons {
+    font-size: 20px;
+}
+
+.revora-quick-actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+}
+
+/* Inline Status Dropdown */
+.revora-status-col {
+    display: flex;
+    align-items: center;
+}
+
+.revora-inline-status {
+    padding: 2px 24px 2px 8px !important;
+    height: 30px !important;
+    min-width: 110px;
+    font-size: 13px !important;
+    line-height: 1 !important;
+    border-radius: 4px !important;
+    background-color: #f6f7f7 !important;
+    border: 1px solid #8c8f94 !important;
+    cursor: pointer;
+    font-weight: 600 !important;
+}
+
+.revora-inline-status.status-pending {
+    background-color: #fcf9e8 !important;
+    color: #856404 !important;
+    border-color: #ffeeba !important;
+}
+
+.revora-inline-status.status-approved {
+    background-color: #e7f4e9 !important;
+    color: #1e7e34 !important;
+    border-color: #c3e6cb !important;
+}
+
+.revora-inline-status.status-rejected {
+    background-color: #fceaea !important;
+    color: #dc3232 !important;
+    border-color: #f5c6cb !important;
+}
+
+.revora-status-col.loading {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
 .revora-category-checklist ul {
     margin: 0;
     padding: 0;

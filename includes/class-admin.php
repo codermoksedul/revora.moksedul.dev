@@ -19,7 +19,24 @@ class Revora_Admin {
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'add_menu_pages' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
 		add_action( 'admin_init', array( $this, 'handle_page_actions' ) );
+
+		// AJAX Handler for Quick Edit
+		add_action( 'wp_ajax_revora_quick_edit', array( $this, 'ajax_quick_edit' ) );
+	}
+
+	public function enqueue_admin_assets( $hook ) {
+		// Only load on plugin pages
+		if ( strpos( $hook, 'revora' ) === false ) {
+			return;
+		}
+
+		wp_enqueue_style( 'revora-admin', REVORA_URL . 'assets/css/revora-admin.css', array(), REVORA_VERSION );
+		wp_enqueue_script( 'revora-admin', REVORA_URL . 'assets/js/revora-admin.js', array( 'jquery' ), REVORA_VERSION, true );
+		wp_localize_script( 'revora-admin', 'revora_admin', array(
+			'nonce' => wp_create_nonce( 'revora_admin_nonce' ),
+		) );
 	}
 
 	/**
@@ -203,6 +220,43 @@ class Revora_Admin {
 	}
 
 	/**
+	 * AJAX Quick Edit Handler
+	 */
+	public function ajax_quick_edit() {
+		check_ajax_referer( 'revora_admin_nonce', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( 'Permission denied' );
+		}
+
+		$id = isset( $_POST['review_id'] ) ? intval( $_POST['review_id'] ) : 0;
+		if ( ! $id ) {
+			wp_send_json_error( 'Invalid review ID' );
+		}
+
+		$data = array();
+		if ( isset( $_POST['status'] ) ) {
+			$data['status'] = sanitize_text_field( $_POST['status'] );
+		}
+		if ( isset( $_POST['rating'] ) ) {
+			$data['rating'] = intval( $_POST['rating'] );
+		}
+
+		if ( empty( $data ) ) {
+			wp_send_json_error( 'No data to update' );
+		}
+
+		$db      = new Revora_DB();
+		$updated = $db->update_review( $id, $data );
+
+		if ( $updated !== false ) {
+			wp_send_json_success( 'Review updated successfully' );
+		} else {
+			wp_send_json_error( 'Failed to update review' );
+		}
+	}
+
+	/**
 	 * Render Reviews Page
 	 */
 	public function render_reviews_page() {
@@ -277,6 +331,41 @@ class Revora_Admin {
 				?>
 			</form>
 		</div>
+
+		<!-- Quick Edit Template -->
+		<script type="text/template" id="revora-quick-edit-template">
+			<tr class="revora-quick-row" id="revora-quick-edit-{{id}}">
+				<td colspan="6">
+					<form class="revora-quick-edit-form">
+						<input type="hidden" name="review_id" value="{{id}}">
+						
+						<div class="revora-field-group">
+							<label class="revora-field-label"><?php _e( 'Status', 'revora' ); ?></label>
+							<select name="status">
+								<option value="pending" {{status_pending}}><?php _e( 'Pending', 'revora' ); ?></option>
+								<option value="approved" {{status_approved}}><?php _e( 'Approved', 'revora' ); ?></option>
+								<option value="rejected" {{status_rejected}}><?php _e( 'Rejected', 'revora' ); ?></option>
+							</select>
+						</div>
+
+						<div class="revora-field-group">
+							<label class="revora-field-label"><?php _e( 'Rating', 'revora' ); ?></label>
+							<div class="revora-rating-selector" data-initial="{{rating}}">
+								<?php for ( $i = 1; $i <= 5; $i++ ) : ?>
+									<span class="dashicons dashicons-star-filled" data-rating="<?php echo $i; ?>"></span>
+								<?php endfor; ?>
+							</div>
+							<input type="hidden" name="rating" value="{{rating}}">
+						</div>
+
+						<div class="revora-quick-actions">
+							<button type="button" class="button button-primary revora-quick-save"><?php _e( 'Update', 'revora' ); ?></button>
+							<button type="button" class="button revora-quick-cancel"><?php _e( 'Cancel', 'revora' ); ?></button>
+						</div>
+					</form>
+				</td>
+			</tr>
+		</script>
 		<?php
 	}
 
@@ -715,16 +804,11 @@ class Revora_Review_List_Table extends WP_List_Table {
 
 	public function column_content( $item ) {
 		$actions = array(
-			'edit'      => sprintf( '<a href="?page=%s&action=%s&review_id=%s">%s</a>', 'revora', 'edit', $item->id, __( 'Edit', 'revora' ) ),
-			'duplicate' => sprintf( '<a href="?page=%s&action=%s&review_id=%s">%s</a>', 'revora', 'duplicate', $item->id, __( 'Duplicate', 'revora' ) ),
-			'approve'   => sprintf( '<a href="?page=%s&action=%s&review_id=%s">%s</a>', 'revora', 'approve', $item->id, __( 'Approve', 'revora' ) ),
-			'reject'    => sprintf( '<a href="?page=%s&action=%s&review_id=%s">%s</a>', 'revora', 'reject', $item->id, __( 'Reject', 'revora' ) ),
-			'delete'    => sprintf( '<a href="?page=%s&action=%s&review_id=%s" onclick="return confirm(\'Are you sure?\')">%s</a>', 'revora', 'delete', $item->id, __( 'Delete', 'revora' ) ),
+			'edit'       => sprintf( '<a href="?page=%s&action=%s&review_id=%s">%s</a>', 'revora', 'edit', $item->id, __( 'Edit', 'revora' ) ),
+			'quick_edit' => sprintf( '<a href="#" class="revora-quick-edit-trigger" data-id="%s">%s</a>', $item->id, __( 'Quick Edit', 'revora' ) ),
+			'duplicate'  => sprintf( '<a href="?page=%s&action=%s&review_id=%s">%s</a>', 'revora', 'duplicate', $item->id, __( 'Duplicate', 'revora' ) ),
+			'delete'     => sprintf( '<a href="?page=%s&action=%s&review_id=%s" onclick="return confirm(\'Are you sure?\')">%s</a>', 'revora', 'delete', $item->id, __( 'Delete', 'revora' ) ),
 		);
-
-		// Remove irrelevant actions based on status
-		if ( 'approved' === $item->status ) unset( $actions['approve'] );
-		if ( 'rejected' === $item->status ) unset( $actions['reject'] );
 
 		// Star Rating
 		$stars = '<div class="revora-admin-stars" style="margin-bottom: 5px;">';
@@ -734,19 +818,17 @@ class Revora_Review_List_Table extends WP_List_Table {
 		}
 		$stars .= '</div>';
 
-		return sprintf( '%s <strong>%s</strong><br>%s%s',
+		return sprintf( '%s <strong>%s</strong>%s',
 			$stars,
 			esc_html( $item->title ),
-			wp_trim_words( esc_html( $item->content ), 15 ),
 			$this->row_actions( $actions )
 		);
 	}
 
 	public function column_author( $item ) {
-		return sprintf( '<strong>%s</strong><br><small>%s</small><br><small>IP: %s</small>',
+		return sprintf( '<strong>%s</strong><br><small>%s</small>',
 			esc_html( $item->name ),
-			esc_html( $item->email ),
-			esc_html( $item->ip_address )
+			esc_html( $item->email )
 		);
 	}
 
@@ -770,8 +852,16 @@ class Revora_Review_List_Table extends WP_List_Table {
 	}
 
 	public function column_status( $item ) {
-		$class = 'status-' . $item->status;
-		return sprintf( '<span class="revora-status-badge %s">%s</span>', $class, ucfirst( $item->status ) );
+		$status_class = 'status-' . $item->status;
+		$output = '<div class="revora-status-col">';
+		$output .= sprintf( '<select class="revora-inline-status %s" data-id="%d">', $status_class, $item->id );
+		$output .= sprintf( '<option value="pending" %s>%s</option>', selected( $item->status, 'pending', false ), __( 'Pending', 'revora' ) );
+		$output .= sprintf( '<option value="approved" %s>%s</option>', selected( $item->status, 'approved', false ), __( 'Approved', 'revora' ) );
+		$output .= sprintf( '<option value="rejected" %s>%s</option>', selected( $item->status, 'rejected', false ), __( 'Rejected', 'revora' ) );
+		$output .= '</select>';
+		$output .= '</div>';
+		
+		return $output;
 	}
 
 	public function column_created_at( $item ) {
