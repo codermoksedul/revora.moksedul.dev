@@ -292,28 +292,36 @@
 
 .revora-submit-btn {
     width: 100%;
-    background: var(--revora-primary);
-    color: #ffffff;
-    border: none;
+    background: var(--revora-primary) !important;
+    color: #ffffff !important;
+    border: none !important;
     padding: 14px 24px;
     border-radius: 6px;
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
+    box-shadow: 0 2px 4px rgba(69, 102, 249, 0.2);
 }
 
 .revora-submit-btn:hover {
-    background: var(--revora-primary-dark);
+    background: #3451d9 !important;
+    box-shadow: 0 4px 8px rgba(69, 102, 249, 0.3);
+    transform: translateY(-1px);
+}
+
+.revora-submit-btn:active {
+    transform: translateY(0);
 }
 
 .revora-submit-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+    transform: none !important;
 }
 
 .revora-spinner {
