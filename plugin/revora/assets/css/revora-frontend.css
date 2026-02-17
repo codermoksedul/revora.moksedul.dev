@@ -1,0 +1,240 @@
+/* Revora Frontend Styles */
+:root {
+    --revora-primary: #0073aa;
+    --revora-star-active: #ffb400;
+    --revora-star-empty: #ccc;
+    --revora-border: #e2e8f0;
+    --revora-text-main: #2d3748;
+    --revora-text-muted: #718096;
+    --revora-bg-light: #f7fafc;
+}
+
+/* Summary Section */
+.revora-reviews-container {
+    max-width: 800px;
+    margin: 2rem 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+.revora-summary {
+    display: flex;
+    align-items: center;
+    background: var(--revora-bg-light);
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    border: 1px solid var(--revora-border);
+}
+
+.revora-average {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.revora-average-number {
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--revora-text-main);
+}
+
+.revora-stars svg {
+    width: 20px;
+    height: 20px;
+    fill: var(--revora-star-empty);
+}
+
+.revora-stars svg.active {
+    fill: var(--revora-star-active);
+}
+
+.revora-total-count {
+    color: var(--revora-text-muted);
+    font-size: 0.875rem;
+}
+
+/* Review Cards */
+.revora-review-card {
+    padding: 1.5rem 0;
+    border-bottom: 1px solid var(--revora-border);
+}
+
+.revora-review-card:last-child {
+    border-bottom: none;
+}
+
+.revora-review-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.revora-review-stars svg {
+    width: 16px;
+    height: 16px;
+    fill: var(--revora-star-empty);
+}
+
+.revora-review-stars svg.active {
+    fill: var(--revora-star-active);
+}
+
+.revora-review-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--revora-text-main);
+}
+
+.revora-review-meta {
+    font-size: 0.875rem;
+    color: var(--revora-text-muted);
+    margin-bottom: 1rem;
+}
+
+.revora-review-author {
+    font-weight: 600;
+    color: var(--revora-text-main);
+}
+
+.revora-review-author::after {
+    content: "•";
+    margin: 0 0.5rem;
+}
+
+.revora-review-content {
+    line-height: 1.6;
+    color: var(--revora-text-main);
+}
+
+/* Form Styles */
+.revora-form-container {
+    max-width: 600px;
+    background: #fff;
+    padding: 2rem;
+    border: 1px solid var(--revora-border);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.revora-form-field {
+    margin-bottom: 1.5rem;
+}
+
+.revora-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.revora-form-field label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--revora-text-main);
+}
+
+.revora-form-field input[type="text"],
+.revora-form-field input[type="email"],
+.revora-form-field textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--revora-border);
+    border-radius: 6px;
+    font-size: 1rem;
+}
+
+/* Star Input */
+.revora-rating-input {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    gap: 0.25rem;
+}
+
+.revora-rating-input input {
+    display: none;
+}
+
+.revora-rating-input label {
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+}
+
+.revora-rating-input label svg {
+    width: 100%;
+    height: 100%;
+    fill: var(--revora-star-empty);
+    transition: fill 0.2s;
+}
+
+.revora-rating-input input:checked ~ label svg,
+.revora-rating-input label:hover ~ label svg,
+.revora-rating-input label:hover svg {
+    fill: var(--revora-star-active);
+}
+
+/* Submit Button */
+.revora-submit-btn {
+    background: var(--revora-primary);
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: opacity 0.2s;
+}
+
+.revora-submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.revora-spinner {
+    display: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: revora-spin 0.6s linear infinite;
+}
+
+@keyframes revora-spin {
+    to { transform: rotate(360deg); }
+}
+
+.revora-form-message {
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    padding: 0.75rem;
+    border-radius: 4px;
+    display: none;
+}
+
+.revora-form-message.success {
+    display: block;
+    background: #c6f6d5;
+    color: #22543d;
+}
+
+.revora-form-message.error {
+    display: block;
+    background: #fed7d7;
+    color: #822727;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .revora-form-row {
+        grid-template-columns: 1fr;
+    }
+}
