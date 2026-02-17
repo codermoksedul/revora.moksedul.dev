@@ -129,10 +129,9 @@ class Revora {
 	public function enqueue_frontend_assets() {
 		wp_enqueue_style( 'revora-frontend', REVORA_URL . 'assets/css/revora-frontend.css', array(), REVORA_VERSION );
 		wp_enqueue_script( 'revora-frontend', REVORA_URL . 'assets/js/revora-frontend.js', array( 'jquery' ), REVORA_VERSION, true );
-
+		
 		wp_localize_script( 'revora-frontend', 'revora_vars', array(
 			'ajax_url' => admin_url( 'admin-ajax.php' ),
-			'nonce'    => wp_create_nonce( 'revora_submit_nonce' ),
 		) );
 	}
 

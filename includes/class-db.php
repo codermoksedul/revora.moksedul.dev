@@ -133,6 +133,19 @@ class Revora_DB {
 		) );
 	}
 
+	public function get_total_approved_count( $category_slug = '' ) {
+		global $wpdb;
+		
+		if ( ! empty( $category_slug ) ) {
+			return (int) $wpdb->get_var( $wpdb->prepare(
+				"SELECT COUNT(*) FROM $this->table_name WHERE status = 'approved' AND category_slug = %s",
+				$category_slug
+			) );
+		}
+		
+		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM $this->table_name WHERE status = 'approved'" );
+	}
+
 	public function get_stats( $category_slug = null ) {
 		global $wpdb;
 

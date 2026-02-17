@@ -15,6 +15,8 @@ class Revora_Ajax {
 	public function __construct() {
 		add_action( 'wp_ajax_revora_submit', array( $this, 'handle_submission' ) );
 		add_action( 'wp_ajax_nopriv_revora_submit', array( $this, 'handle_submission' ) );
+		add_action( 'wp_ajax_revora_load_more', array( $this, 'handle_load_more' ) );
+		add_action( 'wp_ajax_nopriv_revora_load_more', array( $this, 'handle_load_more' ) );
 	}
 
 	/**
@@ -87,9 +89,10 @@ class Revora_Ajax {
 		$body_template    = ! empty( $settings['email_template'] ) ? $settings['email_template'] : __( "New review from {author}\nRating: {rating}\n\n{content}", 'revora' );
 
 		$replace = array(
-			'{author}'    => $data['name'],
-			'{rating}'    => $data['rating'],
-			'{content}'   => $data['content'],
+			'{name}'       => $data['name'],
+			'{title}'      => $data['title'],
+			'{content}'    => $data['content'],
+			'{rating}'     => $data['rating'],
 			'{admin_url}' => admin_url( 'admin.php?page=revora' ),
 		);
 
@@ -97,5 +100,63 @@ class Revora_Ajax {
 		$message = str_replace( array_keys( $replace ), array_values( $replace ), $body_template );
 
 		wp_mail( $admin_email, $subject, $message );
+	}
+
+	/**
+	 * Handle Load More Reviews
+	 */
+	public function handle_load_more() {
+		$category = isset( $_POST['category'] ) ? sanitize_text_field( $_POST['category'] ) : '';
+		$page = isset( $_POST['page'] ) ? intval( $_POST['page'] ) : 1;
+		$limit = isset( $_POST['limit'] ) ? intval( $_POST['limit'] ) : 6;
+		$offset = $page * $limit;
+
+		$db = new Revora_DB();
+		$reviews = $db->get_approved_reviews( $category, $limit, $offset );
+		$total = $db->get_total_approved_count( $category );
+		$settings = wp_parse_args( get_option( 'revora_settings', array() ), array(
+			'star_color' => '#fbbf24',
+			'show_stars' => '1',
+		) );
+
+		if ( empty( $reviews ) ) {
+			wp_send_json_error( array( 'message' => __( 'No more reviews.', 'revora' ) ) );
+		}
+
+		ob_start();
+		foreach ( $reviews as $review ) :
+			?>
+			<div class="revora-review-card">
+				<div class="revora-review-header">
+					<div class="revora-review-meta">
+						<span class="revora-review-author"><?php echo esc_html( $review->name ); ?></span>
+						<span class="revora-review-date"><?php echo date_i18n( get_option( 'date_format' ), strtotime( $review->created_at ) ); ?></span>
+					</div>
+					<?php if ( '1' === $settings['show_stars'] ) : ?>
+						<div class="revora-review-rating">
+							<?php for ( $i = 1; $i <= 5; $i++ ) : ?>
+								<span class="dashicons dashicons-star-filled <?php echo $i <= $review->rating ? 'filled' : 'empty'; ?>"></span>
+							<?php endfor; ?>
+						</div>
+					<?php endif; ?>
+				</div>
+				<h4 class="revora-review-title"><?php echo esc_html( $review->title ); ?></h4>
+				<div class="revora-review-content">
+					<?php echo wpautop( esc_html( $review->content ) ); ?>
+				</div>
+			</div>
+			<?php
+		endforeach;
+		$html = ob_get_clean();
+
+		$loaded = $offset + count( $reviews );
+		$has_more = $loaded < $total;
+
+		wp_send_json_success( array(
+			'html' => $html,
+			'has_more' => $has_more,
+			'loaded' => $loaded,
+			'total' => $total,
+		) );
 	}
 }

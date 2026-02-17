@@ -16,20 +16,22 @@ class Revora_Shortcodes {
 
 	/**
 	 * Render Reviews Shortcode
-	 * [revora_reviews category="category-slug"]
+	 * [revora_reviews category="category-slug" limit="6"]
 	 */
 	public function render_reviews_shortcode( $atts ) {
 		$atts = shortcode_atts( array(
 			'category' => '',
-			'limit'    => 10,
+			'limit'    => 6,
+			'columns'  => 3,
 		), $atts, 'revora_reviews' );
 
 		$db = new Revora_DB();
 		$reviews = $db->get_approved_reviews( $atts['category'], $atts['limit'] );
+		$total_reviews = $db->get_total_approved_count( $atts['category'] );
 		$settings = wp_parse_args( get_option( 'revora_settings', array() ), array(
 			'primary_color' => '#d64e11',
-			'star_color'    => '#ffb400',
-			'layout'        => 'list',
+			'star_color'    => '#fbbf24',
+			'layout'        => 'grid',
 			'show_stars'    => '1',
 			'enable_schema' => '1',
 		) );
@@ -45,28 +47,45 @@ class Revora_Shortcodes {
 			$this->inject_schema( $reviews, $atts['category'] );
 		}
 		?>
-		<div class="revora-reviews-list layout-<?php echo esc_attr( $settings['layout'] ); ?>" 
-			 style="--revora-primary: <?php echo esc_attr( $settings['primary_color'] ); ?>; --revora-star-filled: <?php echo esc_attr( $settings['star_color'] ); ?>;">
+		<div class="revora-reviews-container" 
+			data-category="<?php echo esc_attr( $atts['category'] ); ?>" 
+			data-limit="<?php echo esc_attr( $atts['limit'] ); ?>"
+			data-columns="<?php echo esc_attr( $atts['columns'] ); ?>">
 			
-			<?php foreach ( $reviews as $review ) : ?>
-				<div class="revora-review-item">
-					<div class="revora-review-header">
-						<span class="revora-review-author"><?php echo esc_html( $review->name ); ?></span>
-						<?php if ( '1' === $settings['show_stars'] ) : ?>
-							<div class="revora-review-rating">
-								<?php for ( $i = 1; $i <= 5; $i++ ) : ?>
-									<span class="dashicons dashicons-star-filled <?php echo $i <= $review->rating ? 'filled' : 'empty'; ?>"></span>
-								<?php endfor; ?>
+			<div class="revora-reviews-grid revora-grid-cols-<?php echo esc_attr( $atts['columns'] ); ?>" 
+				style="--revora-primary: <?php echo esc_attr( $settings['primary_color'] ); ?>; --revora-star-filled: <?php echo esc_attr( $settings['star_color'] ); ?>;">
+				
+				<?php foreach ( $reviews as $review ) : ?>
+					<div class="revora-review-card">
+						<div class="revora-review-header">
+							<div class="revora-review-meta">
+								<span class="revora-review-author"><?php echo esc_html( $review->name ); ?></span>
+								<span class="revora-review-date"><?php echo date_i18n( get_option( 'date_format' ), strtotime( $review->created_at ) ); ?></span>
 							</div>
-						<?php endif; ?>
-						<span class="revora-review-date"><?php echo date_i18n( get_option( 'date_format' ), strtotime( $review->created_at ) ); ?></span>
+							<?php if ( '1' === $settings['show_stars'] ) : ?>
+								<div class="revora-review-rating">
+									<?php for ( $i = 1; $i <= 5; $i++ ) : ?>
+										<span class="dashicons dashicons-star-filled <?php echo $i <= $review->rating ? 'filled' : 'empty'; ?>"></span>
+									<?php endfor; ?>
+								</div>
+							<?php endif; ?>
+						</div>
+						<h4 class="revora-review-title"><?php echo esc_html( $review->title ); ?></h4>
+						<div class="revora-review-content">
+							<?php echo wpautop( esc_html( $review->content ) ); ?>
+						</div>
 					</div>
-					<h4 class="revora-review-title"><?php echo esc_html( $review->title ); ?></h4>
-					<div class="revora-review-content">
-						<?php echo wpautop( esc_html( $review->content ) ); ?>
-					</div>
+				<?php endforeach; ?>
+			</div>
+			
+			<?php if ( count( $reviews ) < $total_reviews ) : ?>
+				<div class="revora-load-more-container">
+					<button class="revora-load-more-btn" data-page="1">
+						<span class="btn-text"><?php _e( 'Load More Reviews', 'revora' ); ?></span>
+						<span class="revora-spinner"></span>
+					</button>
 				</div>
-			<?php endforeach; ?>
+			<?php endif; ?>
 		</div>
 		<?php
 		return ob_get_clean();
@@ -117,64 +136,82 @@ class Revora_Shortcodes {
 
 	/**
 	 * Render Form Shortcode
-	 * [revora_form]
+	 * [revora_form category=""]
 	 */
-	public function render_form_shortcode() {
+	public function render_form_shortcode( $atts ) {
+		$atts = shortcode_atts( array(
+			'category' => '',
+		), $atts, 'revora_form' );
+
 		$db = new Revora_DB();
 		$categories = $db->get_categories();
 		$settings = get_option( 'revora_settings' );
+		$has_category = ! empty( $atts['category'] );
 
 		ob_start();
 		?>
-		<div class="revora-frontend-form" style="--revora-primary: <?php echo esc_attr( $settings['primary_color'] ); ?>;">
+		<div class="revora-form-container" style="--revora-primary: <?php echo esc_attr( $settings['primary_color'] ); ?>;">
 			<h3><?php _e( 'Submit a Review', 'revora' ); ?></h3>
-			<form id="revora-review-form">
-				<?php wp_nonce_field( 'revora_review_nonce', 'nonce' ); ?>
+			<form id="revora-review-form" class="revora-form">
+				<?php wp_nonce_field( 'revora_submit_nonce', 'nonce' ); ?>
+				
+				<?php if ( $has_category ) : ?>
+					<input type="hidden" name="category_slug" value="<?php echo esc_attr( $atts['category'] ); ?>">
+				<?php endif; ?>
 				
 				<div class="revora-form-row">
-					<div class="revora-form-group">
+					<div class="revora-form-field">
 						<label for="revora_name"><?php _e( 'Your Name', 'revora' ); ?></label>
 						<input type="text" name="name" id="revora_name" required>
 					</div>
-					<div class="revora-form-group">
+					<div class="revora-form-field">
 						<label for="revora_email"><?php _e( 'Your Email', 'revora' ); ?></label>
 						<input type="email" name="email" id="revora_email" required>
 					</div>
 				</div>
 
-				<div class="revora-form-group">
-					<label for="revora_cat"><?php _e( 'Category', 'revora' ); ?></label>
-					<select name="category_slug" id="revora_cat" required>
-						<option value=""><?php _e( 'Select Category', 'revora' ); ?></option>
-						<?php foreach ( $categories as $cat ) : ?>
-							<option value="<?php echo esc_attr( $cat->slug ); ?>"><?php echo esc_html( $cat->name ); ?></option>
-						<?php endforeach; ?>
-					</select>
-				</div>
+				<?php if ( ! $has_category ) : ?>
+					<div class="revora-form-field">
+						<label for="revora_cat"><?php _e( 'Category', 'revora' ); ?></label>
+						<select name="category_slug" id="revora_cat" required>
+							<option value=""><?php _e( 'Select Category', 'revora' ); ?></option>
+							<?php foreach ( $categories as $cat ) : ?>
+								<option value="<?php echo esc_attr( $cat->slug ); ?>"><?php echo esc_html( $cat->name ); ?></option>
+							<?php endforeach; ?>
+						</select>
+					</div>
+				<?php endif; ?>
 
-				<div class="revora-form-group">
+				<div class="revora-form-field">
 					<label><?php _e( 'Rating', 'revora' ); ?></label>
-					<div class="revora-star-rating" id="revora-frontend-rating">
-						<?php for ( $i = 1; $i <= 5; $i++ ) : ?>
-							<span class="dashicons dashicons-star-filled" data-rating="<?php echo $i; ?>"></span>
+					<div class="revora-rating-input">
+						<?php for ( $i = 5; $i >= 1; $i-- ) : ?>
+							<input type="radio" id="star-<?php echo $i; ?>" name="rating" value="<?php echo $i; ?>" <?php checked( $i, 5 ); ?> required />
+							<label for="star-<?php echo $i; ?>" title="<?php echo $i; ?> stars">
+								<svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+							</label>
 						<?php endfor; ?>
 					</div>
-					<input type="hidden" name="rating" id="revora_rating_val" value="5">
 				</div>
 
-				<div class="revora-form-group">
+				<div class="revora-form-field">
 					<label for="revora_title"><?php _e( 'Review Title', 'revora' ); ?></label>
 					<input type="text" name="title" id="revora_title" required>
 				</div>
 
-				<div class="revora-form-group">
+				<div class="revora-form-field">
 					<label for="revora_content"><?php _e( 'Review Content', 'revora' ); ?></label>
-					<textarea name="content" id="revora_content" rows="5" required></textarea>
+					<textarea name="content" id="revora_content" rows="5" required minlength="25"></textarea>
 				</div>
 
-				<div id="revora-form-message"></div>
+				<div id="revora-form-message" class="revora-form-message"></div>
 				
-				<button type="submit" class="revora-submit-btn"><?php _e( 'Submit Review', 'revora' ); ?></button>
+				<div class="revora-form-footer">
+					<button type="submit" class="revora-submit-btn">
+						<span class="btn-text"><?php _e( 'Submit Review', 'revora' ); ?></span>
+						<span class="revora-spinner"></span>
+					</button>
+				</div>
 			</form>
 		</div>
 		<?php

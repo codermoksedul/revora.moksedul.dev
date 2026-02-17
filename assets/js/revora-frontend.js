@@ -76,4 +76,50 @@ jQuery(document).ready(function($) {
             }
         });
     });
+
+    /**
+     * Load More Reviews
+     */
+    $('.revora-load-more-btn').on('click', function() {
+        const $btn = $(this);
+        const $container = $btn.closest('.revora-reviews-container');
+        const $grid = $container.find('.revora-reviews-grid');
+        const category = $container.data('category') || '';
+        const limit = parseInt($container.data('limit')) || 6;
+        let page = parseInt($btn.data('page')) || 1;
+
+        $btn.prop('disabled', true);
+        $btn.find('.btn-text').text('Loading...');
+
+        $.ajax({
+            url: revora_vars.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'revora_load_more',
+                category: category,
+                page: page,
+                limit: limit
+            },
+            success: function(response) {
+                if (response.success) {
+                    $grid.append(response.data.html);
+                    page++;
+                    $btn.data('page', page);
+
+                    if (!response.data.has_more) {
+                        $btn.parent().fadeOut();
+                    }
+                } else {
+                    $btn.parent().fadeOut();
+                }
+            },
+            error: function() {
+                alert('Error loading more reviews. Please try again.');
+            },
+            complete: function() {
+                $btn.prop('disabled', false);
+                $btn.find('.btn-text').text('Load More Reviews');
+            }
+        });
+    });
 });
