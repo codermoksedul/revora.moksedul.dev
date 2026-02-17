@@ -1,240 +1,205 @@
 /* Revora Frontend Styles */
-:root {
-    --revora-primary: #0073aa;
-    --revora-star-active: #ffb400;
+.revora-reviews-list, .revora-frontend-form {
+    --revora-primary: #d64e11;
+    --revora-star-filled: #ffb400;
     --revora-star-empty: #ccc;
-    --revora-border: #e2e8f0;
-    --revora-text-main: #2d3748;
-    --revora-text-muted: #718096;
-    --revora-bg-light: #f7fafc;
-}
-
-/* Summary Section */
-.revora-reviews-container {
-    max-width: 800px;
-    margin: 2rem 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    margin: 20px 0;
 }
 
-.revora-summary {
-    display: flex;
-    align-items: center;
-    background: var(--revora-bg-light);
-    padding: 2rem;
-    border-radius: 12px;
-    margin-bottom: 2rem;
-    border: 1px solid var(--revora-border);
+/* Layout: Grid */
+.revora-reviews-list.layout-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
 }
 
-.revora-average {
+/* Reviews List Item */
+.revora-review-item {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
 }
 
-.revora-average-number {
-    font-size: 3rem;
-    font-weight: 800;
-    line-height: 1;
-    color: var(--revora-text-main);
-}
-
-.revora-stars svg {
-    width: 20px;
-    height: 20px;
-    fill: var(--revora-star-empty);
-}
-
-.revora-stars svg.active {
-    fill: var(--revora-star-active);
-}
-
-.revora-total-count {
-    color: var(--revora-text-muted);
-    font-size: 0.875rem;
-}
-
-/* Review Cards */
-.revora-review-card {
-    padding: 1.5rem 0;
-    border-bottom: 1px solid var(--revora-border);
-}
-
-.revora-review-card:last-child {
-    border-bottom: none;
+.revora-reviews-list.layout-grid .revora-review-item {
+    margin-bottom: 0;
 }
 
 .revora-review-header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 1rem;
-    margin-bottom: 0.5rem;
-}
-
-.revora-review-stars svg {
-    width: 16px;
-    height: 16px;
-    fill: var(--revora-star-empty);
-}
-
-.revora-review-stars svg.active {
-    fill: var(--revora-star-active);
-}
-
-.revora-review-title {
-    font-size: 1.125rem;
-    font-weight: 700;
-    margin: 0;
-    color: var(--revora-text-main);
-}
-
-.revora-review-meta {
-    font-size: 0.875rem;
-    color: var(--revora-text-muted);
-    margin-bottom: 1rem;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .revora-review-author {
-    font-weight: 600;
-    color: var(--revora-text-main);
+    font-weight: 700;
+    color: #1a202c;
+    font-size: 1.1em;
 }
 
-.revora-review-author::after {
-    content: "•";
-    margin: 0 0.5rem;
+.revora-review-date {
+    font-size: 0.85em;
+    color: #718096;
+}
+
+.revora-review-rating .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: var(--revora-star-empty);
+}
+
+.revora-review-rating .dashicons.filled {
+    color: var(--revora-star-filled);
+}
+
+.revora-review-title {
+    margin: 0 0 10px 0;
+    font-size: 1.2em;
+    color: #2d3748;
 }
 
 .revora-review-content {
+    color: #4a5568;
     line-height: 1.6;
-    color: var(--revora-text-main);
+    flex: 1;
 }
 
-/* Form Styles */
-.revora-form-container {
-    max-width: 600px;
-    background: #fff;
-    padding: 2rem;
-    border: 1px solid var(--revora-border);
+/* Frontend Form */
+.revora-frontend-form {
+    background: #f7fafc;
+    border: 1px solid #e2e8f0;
     border-radius: 12px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-.revora-form-field {
-    margin-bottom: 1.5rem;
+.revora-frontend-form h3 {
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-size: 1.5em;
+    color: #1a202c;
+    text-align: center;
 }
 
 .revora-form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-}
-
-.revora-form-field label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    color: var(--revora-text-main);
-}
-
-.revora-form-field input[type="text"],
-.revora-form-field input[type="email"],
-.revora-form-field textarea {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid var(--revora-border);
-    border-radius: 6px;
-    font-size: 1rem;
-}
-
-/* Star Input */
-.revora-rating-input {
     display: flex;
-    flex-direction: row-reverse;
-    justify-content: flex-end;
-    gap: 0.25rem;
+    gap: 20px;
+    margin-bottom: 15px;
 }
 
-.revora-rating-input input {
-    display: none;
+.revora-form-row .revora-form-group {
+    flex: 1;
 }
 
-.revora-rating-input label {
-    cursor: pointer;
-    width: 30px;
-    height: 30px;
+.revora-form-group {
+    margin-bottom: 20px;
 }
 
-.revora-rating-input label svg {
+.revora-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #4a5568;
+}
+
+.revora-form-group input, 
+.revora-form-group select, 
+.revora-form-group textarea {
     width: 100%;
-    height: 100%;
-    fill: var(--revora-star-empty);
-    transition: fill 0.2s;
+    padding: 10px;
+    border: 1px solid #cbd5e0;
+    border-radius: 6px;
+    font-size: 14px;
 }
 
-.revora-rating-input input:checked ~ label svg,
-.revora-rating-input label:hover ~ label svg,
-.revora-rating-input label:hover svg {
-    fill: var(--revora-star-active);
+.revora-form-group input:focus, 
+.revora-form-group select:focus, 
+.revora-form-group textarea:focus {
+    outline: none;
+    border-color: var(--revora-primary);
+    box-shadow: 0 0 0 3px rgba(214, 78, 17, 0.1);
 }
 
-/* Submit Button */
+/* Star Rating Interaction */
+.revora-star-rating {
+    display: flex;
+    gap: 5px;
+}
+
+.revora-star-rating .dashicons {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    color: var(--revora-star-empty);
+    transition: color 0.2s;
+}
+
+.revora-star-rating .dashicons.active,
+.revora-star-rating .dashicons:hover {
+    color: var(--revora-star-filled);
+}
+
 .revora-submit-btn {
+    width: 100%;
     background: var(--revora-primary);
     color: #fff;
     border: none;
-    padding: 0.75rem 1.5rem;
+    padding: 12px;
     border-radius: 6px;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 700;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: opacity 0.2s;
+    transition: background 0.2s;
+}
+
+.revora-submit-btn:hover {
+    filter: brightness(1.1);
 }
 
 .revora-submit-btn:disabled {
-    opacity: 0.7;
+    opacity: 0.6;
     cursor: not-allowed;
 }
 
-.revora-spinner {
-    display: none;
-    width: 16px;
-    height: 16px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    border-top-color: #fff;
-    animation: revora-spin 0.6s linear infinite;
-}
-
-@keyframes revora-spin {
-    to { transform: rotate(360deg); }
-}
-
-.revora-form-message {
-    margin-top: 1rem;
-    font-size: 0.875rem;
-    padding: 0.75rem;
-    border-radius: 4px;
+#revora-form-message {
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 20px;
     display: none;
 }
 
-.revora-form-message.success {
-    display: block;
+#revora-form-message.success {
     background: #c6f6d5;
     color: #22543d;
+    border: 1px solid #9ae6b4;
+    display: block;
 }
 
-.revora-form-message.error {
-    display: block;
+#revora-form-message.error {
     background: #fed7d7;
     color: #822727;
+    border: 1px solid #feb2b2;
+    display: block;
 }
 
-/* Responsive */
-@media (max-width: 640px) {
+@media (max-width: 600px) {
     .revora-form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    .revora-reviews-list.layout-grid {
         grid-template-columns: 1fr;
     }
 }

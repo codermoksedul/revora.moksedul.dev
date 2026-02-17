@@ -85,7 +85,56 @@ class Revora_Admin {
 	 * Register Settings
 	 */
 	public function register_settings() {
-		register_setting( 'revora_settings_group', 'revora_settings' );
+		register_setting( 'revora_settings_group', 'revora_settings', array(
+			'sanitize_callback' => array( $this, 'sanitize_settings' ),
+			'default'           => $this->get_settings_defaults(),
+		) );
+	}
+
+	/**
+	 * Get Settings Defaults
+	 */
+	private function get_settings_defaults() {
+		return array(
+			'primary_color'  => '#d64e11',
+			'star_color'     => '#ffb400',
+			'layout'         => 'list',
+			'enable_schema'  => '1',
+			'admin_email'    => get_option( 'admin_email' ),
+			'auto_approve'   => '0',
+			'show_stars'     => '1',
+			'email_subject'  => __( 'New Review Received', 'revora' ),
+			'email_template' => __( "Hello Admin,\n\nA new review has been submitted for your approval.\n\nAuthor: {author}\nRating: {rating}\nContent: {content}\n\nYou can moderate it here: {admin_url}", 'revora' ),
+			'custom_css'     => '',
+		);
+	}
+
+	/**
+	 * Sanitize Settings (Fixes Checkbox issue)
+	 */
+	public function sanitize_settings( $input ) {
+		$output   = array();
+		$defaults = $this->get_settings_defaults();
+
+		// For checkboxes, we want them to be '0' if missing from POST
+		$checkboxes = array( 'enable_schema', 'auto_approve', 'show_stars' );
+
+		foreach ( $defaults as $key => $default ) {
+			if ( in_array( $key, $checkboxes ) ) {
+				$output[ $key ] = isset( $input[ $key ] ) ? '1' : '0';
+			} elseif ( isset( $input[ $key ] ) ) {
+				$output[ $key ] = sanitize_text_field( $input[ $key ] );
+			} else {
+				$output[ $key ] = $default;
+			}
+		}
+
+		// Specific sanitization for CSS
+		if ( isset( $input['custom_css'] ) ) {
+			$output['custom_css'] = wp_strip_all_tags( $input['custom_css'] );
+		}
+
+		return $output;
 	}
 
 	/**
@@ -719,40 +768,140 @@ class Revora_Admin {
 	 * Render Settings Page
 	 */
 	public function render_settings_page() {
-		$settings = get_option( 'revora_settings' );
+		$settings = wp_parse_args( get_option( 'revora_settings', array() ), $this->get_settings_defaults() );
+		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'general';
+		
+		$tabs = array(
+			'general'    => array( 'label' => __( 'General', 'revora' ), 'icon' => 'admin-settings' ),
+			'moderation' => array( 'label' => __( 'Moderation', 'revora' ), 'icon' => 'admin-users' ),
+			'emails'     => array( 'label' => __( 'Emails', 'revora' ), 'icon' => 'email-alt' ),
+			'shortcodes' => array( 'label' => __( 'Shortcodes', 'revora' ), 'icon' => 'editor-code' ),
+		);
 		?>
-		<div class="wrap">
+		<div class="wrap revora-settings-wrap">
 			<h1><?php _e( 'Revora Settings', 'revora' ); ?></h1>
-			<form method="post" action="options.php">
-				<?php
-				settings_fields( 'revora_settings_group' );
-				do_settings_sections( 'revora_settings_group' );
-				?>
-				<table class="form-table">
-					<tr valign="top">
-						<th scope="row"><?php _e( 'Primary Color', 'revora' ); ?></th>
-						<td>
-							<input type="color" name="revora_settings[primary_color]" value="<?php echo esc_attr( $settings['primary_color'] ); ?>" />
-							<p class="description"><?php _e( 'Used for buttons and active stars.', 'revora' ); ?></p>
-						</td>
-					</tr>
-					<tr valign="top">
-						<th scope="row"><?php _e( 'Admin Notification Email', 'revora' ); ?></th>
-						<td>
-							<input type="email" name="revora_settings[admin_email]" value="<?php echo esc_attr( $settings['admin_email'] ); ?>" class="regular-text" />
-							<p class="description"><?php _e( 'Email to receive new review alerts.', 'revora' ); ?></p>
-						</td>
-					</tr>
-					<tr valign="top">
-						<th scope="row"><?php _e( 'Custom CSS', 'revora' ); ?></th>
-						<td>
-							<textarea name="revora_settings[custom_css]" rows="10" cols="50" class="large-text"><?php echo esc_textarea( $settings['custom_css'] ); ?></textarea>
-							<p class="description"><?php _e( 'Add your custom CSS here.', 'revora' ); ?></p>
-						</td>
-					</tr>
-				</table>
-				<?php submit_button(); ?>
-			</form>
+			
+			<div class="revora-settings-container">
+				<nav class="revora-settings-tabs">
+					<?php foreach ( $tabs as $id => $tab ) : ?>
+						<a href="?page=revora-settings&tab=<?php echo $id; ?>" class="revora-tab-link <?php echo $active_tab === $id ? 'active' : ''; ?>">
+							<span class="dashicons dashicons-<?php echo $tab['icon']; ?>"></span>
+							<?php echo $tab['label']; ?>
+						</a>
+					<?php endforeach; ?>
+				</nav>
+
+				<form method="post" action="options.php" class="revora-settings-form">
+					<?php
+					settings_fields( 'revora_settings_group' );
+					?>
+
+					<div class="revora-settings-content">
+						<?php if ( 'general' === $active_tab ) : ?>
+							<div class="revora-card">
+								<div class="revora-card-header"><?php _e( 'Appearance', 'revora' ); ?></div>
+								<div class="revora-card-body">
+									<div class="revora-field-group">
+										<label class="revora-field-label"><?php _e( 'Primary Color', 'revora' ); ?></label>
+										<input type="color" name="revora_settings[primary_color]" value="<?php echo esc_attr( $settings['primary_color'] ); ?>" />
+										<p class="description"><?php _e( 'Used for buttons and UI highlights.', 'revora' ); ?></p>
+									</div>
+									<div class="revora-field-group">
+										<label class="revora-field-label"><?php _e( 'Star Color', 'revora' ); ?></label>
+										<input type="color" name="revora_settings[star_color]" value="<?php echo esc_attr( $settings['star_color'] ); ?>" />
+										<p class="description"><?php _e( 'Color for filled stars.', 'revora' ); ?></p>
+									</div>
+									<div class="revora-field-group">
+										<label class="revora-field-label"><?php _e( 'Reviews Layout', 'revora' ); ?></label>
+										<select name="revora_settings[layout]">
+											<option value="list" <?php selected( $settings['layout'], 'list' ); ?>><?php _e( 'Modern List', 'revora' ); ?></option>
+											<option value="grid" <?php selected( $settings['layout'], 'grid' ); ?>><?php _e( 'Responsive Grid', 'revora' ); ?></option>
+										</select>
+									</div>
+									<div class="revora-field-group">
+										<label class="revora-field-label"><?php _e( 'Advanced Options', 'revora' ); ?></label>
+										<label>
+											<input type="checkbox" name="revora_settings[show_stars]" value="1" <?php checked( $settings['show_stars'], '1' ); ?>>
+											<?php _e( 'Show Star Ratings on Frontend', 'revora' ); ?>
+										</label>
+										<br>
+										<label>
+											<input type="checkbox" name="revora_settings[enable_schema]" value="1" <?php checked( $settings['enable_schema'], '1' ); ?>>
+											<?php _e( 'Enable Schema.org SEO Markup', 'revora' ); ?>
+										</label>
+									</div>
+									<div class="revora-field-group">
+										<label class="revora-field-label"><?php _e( 'Custom CSS', 'revora' ); ?></label>
+										<textarea name="revora_settings[custom_css]" rows="8" class="large-text code"><?php echo esc_textarea( $settings['custom_css'] ); ?></textarea>
+									</div>
+								</div>
+							</div>
+
+						<?php elseif ( 'moderation' === $active_tab ) : ?>
+							<div class="revora-card">
+								<div class="revora-card-header"><?php _e( 'Moderation Settings', 'revora' ); ?></div>
+								<div class="revora-card-body">
+									<div class="revora-field-group">
+										<label class="revora-field-label"><?php _e( 'Approval Flow', 'revora' ); ?></label>
+										<label>
+											<input type="checkbox" name="revora_settings[auto_approve]" value="1" <?php checked( $settings['auto_approve'], '1' ); ?>>
+											<?php _e( 'Auto-approve new reviews', 'revora' ); ?>
+										</label>
+										<p class="description"><?php _e( 'If enabled, reviews will be published instantly without manual approval.', 'revora' ); ?></p>
+									</div>
+									<div class="revora-field-group">
+										<label class="revora-field-label" for="revora_admin_email"><?php _e( 'Admin Notification Email', 'revora' ); ?></label>
+										<input type="email" name="revora_settings[admin_email]" id="revora_admin_email" value="<?php echo esc_attr( $settings['admin_email'] ); ?>" class="regular-text" />
+									</div>
+								</div>
+							</div>
+
+						<?php elseif ( 'emails' === $active_tab ) : ?>
+							<div class="revora-card">
+								<div class="revora-card-header"><?php _e( 'Admin Notification Template', 'revora' ); ?></div>
+								<div class="revora-card-body">
+									<div class="revora-field-group">
+										<label class="revora-field-label"><?php _e( 'Email Subject', 'revora' ); ?></label>
+										<input type="text" name="revora_settings[email_subject]" value="<?php echo esc_attr( $settings['email_subject'] ); ?>" class="regular-text">
+									</div>
+									<div class="revora-field-group">
+										<label class="revora-field-label"><?php _e( 'Email Template', 'revora' ); ?></label>
+										<textarea name="revora_settings[email_template]" rows="10" class="large-text"><?php echo esc_textarea( $settings['email_template'] ); ?></textarea>
+										<p class="description">
+											<?php _e( 'Available tags:', 'revora' ); ?> <code>{author}</code>, <code>{rating}</code>, <code>{content}</code>, <code>{admin_url}</code>
+										</p>
+									</div>
+								</div>
+							</div>
+
+						<?php elseif ( 'shortcodes' === $active_tab ) : ?>
+							<div class="revora-card">
+								<div class="revora-card-header"><?php _e( 'Shortcode Documentation', 'revora' ); ?></div>
+								<div class="revora-card-body">
+									<div class="revora-shortcode-info">
+										<h3><?php _e( 'Display Reviews', 'revora' ); ?></h3>
+										<p><?php _e( 'Use this shortcode to display approved reviews on any post or page.', 'revora' ); ?></p>
+										<code>[revora_reviews category="category-slug"]</code>
+										<p class="description"><?php _e( 'The "category" attribute is optional. Omit it to show all reviews.', 'revora' ); ?></p>
+									</div>
+									<hr>
+									<div class="revora-shortcode-info">
+										<h3><?php _e( 'Review Submission Form', 'revora' ); ?></h3>
+										<p><?php _e( 'Use this shortcode to display the review submission form.', 'revora' ); ?></p>
+										<code>[revora_form]</code>
+									</div>
+								</div>
+							</div>
+						<?php endif; ?>
+
+						<?php if ( 'shortcodes' !== $active_tab ) : ?>
+							<div class="revora-settings-actions">
+								<?php submit_button( __( 'Save All Changes', 'revora' ), 'primary', 'submit', false ); ?>
+							</div>
+						<?php endif; ?>
+					</div>
+				</form>
+			</div>
 		</div>
 		<?php
 	}

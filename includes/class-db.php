@@ -126,6 +126,17 @@ class Revora_DB {
 	}
 
 	/**
+	 * Get Approved Reviews helper
+	 */
+	public function get_approved_reviews( $category_slug = '', $limit = 10 ) {
+		return $this->get_reviews( array(
+			'category_slug' => $category_slug,
+			'status'        => 'approved',
+			'limit'         => $limit,
+		) );
+	}
+
+	/**
 	 * Get Stats (Average Rating & Count)
 	 */
 	public function get_stats( $category_slug ) {

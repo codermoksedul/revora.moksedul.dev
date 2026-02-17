@@ -53,7 +53,9 @@ class Revora_Ajax {
 
 		// Prepare for DB
 		unset( $data['revora_honeypot'] );
-		$data['status'] = 'pending';
+		
+		$settings = get_option( 'revora_settings' );
+		$data['status'] = ( isset( $settings['auto_approve'] ) && '1' === $settings['auto_approve'] ) ? 'approved' : 'pending';
 
 		$db = new Revora_DB();
 		$inserted = $db->insert_review( $data );
@@ -62,8 +64,12 @@ class Revora_Ajax {
 			// Trigger email notification
 			$this->send_notifications( $data );
 
+			$success_msg = ( 'approved' === $data['status'] ) 
+				? __( 'Thank you! Your review has been published.', 'revora' )
+				: __( 'Thank you! Your review has been submitted and is awaiting moderation.', 'revora' );
+
 			wp_send_json_success( array(
-				'message' => __( 'Thank you! Your review has been submitted and is awaiting moderation.', 'revora' ),
+				'message' => $success_msg,
 			) );
 		} else {
 			wp_send_json_error( array( 'message' => __( 'Something went wrong. Please try again.', 'revora' ) ) );
@@ -77,15 +83,18 @@ class Revora_Ajax {
 		$settings = get_option( 'revora_settings' );
 		$admin_email = ! empty( $settings['admin_email'] ) ? $settings['admin_email'] : get_option( 'admin_email' );
 
-		$subject = sprintf( __( 'New Review Submitted for %s', 'revora' ), $data['category_slug'] );
-		$message = sprintf( __( "New review details:\n\nName: %s\nEmail: %s\nRating: %d\nTitle: %s\nContent: %s\n\nApprove it here: %s", 'revora' ),
-			$data['name'],
-			$data['email'],
-			$data['rating'],
-			$data['title'],
-			$data['content'],
-			admin_url( 'admin.php?page=revora' )
+		$subject_template = ! empty( $settings['email_subject'] ) ? $settings['email_subject'] : __( 'New Review Submitted', 'revora' );
+		$body_template    = ! empty( $settings['email_template'] ) ? $settings['email_template'] : __( "New review from {author}\nRating: {rating}\n\n{content}", 'revora' );
+
+		$replace = array(
+			'{author}'    => $data['name'],
+			'{rating}'    => $data['rating'],
+			'{content}'   => $data['content'],
+			'{admin_url}' => admin_url( 'admin.php?page=revora' ),
 		);
+
+		$subject = str_replace( array_keys( $replace ), array_values( $replace ), $subject_template );
+		$message = str_replace( array_keys( $replace ), array_values( $replace ), $body_template );
 
 		wp_mail( $admin_email, $subject, $message );
 	}

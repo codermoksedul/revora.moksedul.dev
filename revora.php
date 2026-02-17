@@ -69,6 +69,7 @@ class Revora {
 		}
 		new Revora_Ajax();
 		new Revora_Frontend();
+		new Revora_Shortcodes();
 	}
 
 	/**
@@ -80,6 +81,7 @@ class Revora {
 		require_once REVORA_INC . 'class-ajax.php';
 		require_once REVORA_INC . 'class-frontend.php';
 		require_once REVORA_INC . 'class-admin.php';
+		require_once REVORA_INC . 'class-shortcodes.php';
 	}
 
 	/**

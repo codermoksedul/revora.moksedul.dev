@@ -217,9 +217,109 @@
     margin-bottom: 5px;
 }
 
-.revora-category-checklist .children {
-    margin-left: 18px;
-    margin-top: 5px;
+/* Settings Page Styling */
+.revora-settings-wrap {
+    max-width: 1200px;
+    margin-top: 20px;
+}
+
+.revora-settings-container {
+    display: flex;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+    min-height: 500px;
+    margin-top: 20px;
+}
+
+.revora-settings-tabs {
+    width: 220px;
+    background: #f0f0f1;
+    border-right: 1px solid #ccd0d4;
+}
+
+.revora-tab-link {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    color: #1d2327;
+    text-decoration: none;
+    border-bottom: 1px solid #ccd0d4;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.revora-tab-link:hover {
+    background: #fff;
+    color: #2271b1;
+}
+
+.revora-tab-link.active {
+    background: #fff;
+    color: #2271b1;
+    border-right: 2px solid #2271b1;
+    margin-right: -1px;
+}
+
+.revora-tab-link .dashicons {
+    margin-right: 10px;
+    color: #646970;
+}
+
+.revora-tab-link.active .dashicons {
+    color: #2271b1;
+}
+
+.revora-settings-form {
+    flex: 1;
+}
+
+.revora-settings-content {
+    padding: 30px;
+}
+
+.revora-settings-content .revora-card {
+    margin-bottom: 0;
+    border: none;
+    box-shadow: none;
+}
+
+.revora-settings-content .revora-card-header {
+    font-size: 1.5em;
+    padding: 0 0 20px 0;
+    border-bottom: 2px solid #f0f0f1;
+    margin-bottom: 30px;
+}
+
+.revora-settings-content .revora-card-body {
+    padding: 0;
+}
+
+.revora-settings-actions {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 2px solid #f0f0f1;
+}
+
+.revora-shortcode-info {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 6px;
+    border-left: 4px solid #2271b1;
+    margin-bottom: 20px;
+}
+
+.revora-shortcode-info h3 {
+    margin-top: 0;
+}
+
+.revora-shortcode-info code {
+    display: block;
+    padding: 10px;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    margin: 10px 0;
+    font-size: 1.1em;
 }
 
 .revora-category-checklist label {
