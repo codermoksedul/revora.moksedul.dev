@@ -121,14 +121,48 @@
     height: 24px;
     color: #ccd0d4;
     transition: color 0.2s;
+    cursor: pointer;
 }
 
 .revora-rating-selector .dashicons:hover,
 .revora-rating-selector .dashicons.active {
-    color: #ffb400;
+    color: #ffb400 !important;
 }
 
-/* Settings Page & Form Tables */
+/* Category Checklist */
+.revora-category-checklist {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ccd0d4;
+    padding: 10px;
+    background: #fff;
+}
+
+.revora-category-checklist ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.revora-category-checklist li {
+    margin-bottom: 5px;
+}
+
+.revora-category-checklist .children {
+    margin-left: 18px;
+    margin-top: 5px;
+}
+
+.revora-category-checklist label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
+.revora-category-checklist input[type="checkbox"] {
+    margin: 0;
+}
 .revora-settings-table th,
 .form-table th {
     width: 200px;

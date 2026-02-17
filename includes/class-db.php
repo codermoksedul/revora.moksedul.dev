@@ -22,6 +22,7 @@ class Revora_DB {
 		global $wpdb;
 		$this->table_name = $wpdb->prefix . 'revora_reviews';
 		$this->cat_table  = $wpdb->prefix . 'revora_categories';
+		$this->rel_table  = $wpdb->prefix . 'revora_review_categories';
 	}
 
 	/**
@@ -53,15 +54,28 @@ class Revora_DB {
 		// Create Categories Table
 		$cat_sql = "CREATE TABLE $this->cat_table (
 			id bigint(20) NOT NULL AUTO_INCREMENT,
+			parent_id bigint(20) DEFAULT 0 NOT NULL,
 			name varchar(255) NOT NULL,
 			slug varchar(255) NOT NULL,
 			description text,
 			created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
 			PRIMARY KEY (id),
-			UNIQUE KEY slug (slug)
+			UNIQUE KEY slug (slug),
+			KEY parent_id (parent_id)
 		) $charset_collate;";
 
 		dbDelta( $cat_sql );
+
+		// Create Relationships Table for Multiple Categories
+		$rel_sql = "CREATE TABLE $this->rel_table (
+			review_id bigint(20) NOT NULL,
+			cat_id bigint(20) NOT NULL,
+			PRIMARY KEY (review_id, cat_id),
+			KEY review_id (review_id),
+			KEY cat_id (cat_id)
+		) $charset_collate;";
+
+		dbDelta( $rel_sql );
 	}
 
 	/**
@@ -211,6 +225,41 @@ class Revora_DB {
 
 	public function delete_category( $id ) {
 		global $wpdb;
+		// Also delete relationships
+		$wpdb->delete( $this->rel_table, array( 'cat_id' => $id ) );
 		return $wpdb->delete( $this->cat_table, array( 'id' => $id ) );
+	}
+
+	/**
+	 * MULTIPLE CATEGORY RELATIONSHIPS
+	 */
+
+	public function set_review_categories( $review_id, $cat_ids ) {
+		global $wpdb;
+
+		// Clear old relationships
+		$wpdb->delete( $this->rel_table, array( 'review_id' => $review_id ) );
+
+		if ( empty( $cat_ids ) ) {
+			return true;
+		}
+
+		if ( ! is_array( $cat_ids ) ) {
+			$cat_ids = array( $cat_ids );
+		}
+
+		foreach ( $cat_ids as $cat_id ) {
+			$wpdb->insert( $this->rel_table, array(
+				'review_id' => $review_id,
+				'cat_id'    => $cat_id
+			) );
+		}
+
+		return true;
+	}
+
+	public function get_review_categories( $review_id ) {
+		global $wpdb;
+		return $wpdb->get_col( $wpdb->prepare( "SELECT cat_id FROM $this->rel_table WHERE review_id = %d", $review_id ) );
 	}
 }

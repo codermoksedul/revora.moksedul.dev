@@ -90,6 +90,9 @@ class Revora_Admin {
 			
 			$inserted = $db->insert_review( $data );
 			if ( $inserted ) {
+				$cat_ids = isset( $_POST['categories'] ) ? array_map( 'intval', $_POST['categories'] ) : array();
+				$db->set_review_categories( $inserted, $cat_ids );
+
 				wp_redirect( admin_url( 'admin.php?page=revora&message=added' ) );
 				exit;
 			}
@@ -111,6 +114,9 @@ class Revora_Admin {
 
 			$updated = $db->update_review( $id, $data );
 			if ( $updated !== false ) {
+				$cat_ids = isset( $_POST['categories'] ) ? array_map( 'intval', $_POST['categories'] ) : array();
+				$db->set_review_categories( $id, $cat_ids );
+				
 				wp_redirect( admin_url( 'admin.php?page=revora&message=updated' ) );
 				exit;
 			}
@@ -123,6 +129,7 @@ class Revora_Admin {
 			$slug = ! empty( $_POST['cat_slug'] ) ? sanitize_title( $_POST['cat_slug'] ) : sanitize_title( $name );
 			
 			$data = array(
+				'parent_id'   => intval( $_POST['parent_id'] ),
 				'name'        => $name,
 				'slug'        => $slug,
 				'description' => sanitize_textarea_field( $_POST['cat_description'] ),
@@ -287,20 +294,17 @@ class Revora_Admin {
 						</div>
 						<div class="revora-card-body">
 							<div class="revora-field-group">
-								<label class="revora-field-label" for="category_slug"><?php _e( 'Category', 'revora' ); ?></label>
-								<select name="category_slug" id="category_slug" required>
-									<option value="default"><?php _e( 'Default', 'revora' ); ?></option>
-									<?php foreach ( $categories as $cat ) : ?>
-										<option value="<?php echo esc_attr( $cat->slug ); ?>"><?php echo esc_html( $cat->name ); ?></option>
-									<?php endforeach; ?>
-								</select>
+								<label class="revora-field-label"><?php _e( 'Categories', 'revora' ); ?></label>
+								<div class="revora-category-checklist">
+									<?php $this->render_category_checklist(); ?>
+								</div>
 							</div>
 
 							<div class="revora-field-group">
 								<label class="revora-field-label"><?php _e( 'Rating', 'revora' ); ?></label>
 								<div class="revora-rating-selector">
 									<?php for ( $i = 1; $i <= 5; $i++ ) : ?>
-										<span class="dashicons dashicons-star-filled" data-rating="<?php echo $i; ?>"></span>
+										<span class="dashicons dashicons-star-filled active" data-rating="<?php echo $i; ?>"></span>
 									<?php endfor; ?>
 								</div>
 								<input type="hidden" name="rating" id="rating_input" value="5">
@@ -390,20 +394,21 @@ class Revora_Admin {
 							</div>
 
 							<div class="revora-field-group">
-								<label class="revora-field-label" for="category_slug"><?php _e( 'Category', 'revora' ); ?></label>
-								<select name="category_slug" id="category_slug" required>
-									<option value="default" <?php selected( $review->category_slug, 'default' ); ?>><?php _e( 'Default', 'revora' ); ?></option>
-									<?php foreach ( $categories as $cat ) : ?>
-										<option value="<?php echo esc_attr( $cat->slug ); ?>" <?php selected( $review->category_slug, $cat->slug ); ?>><?php echo esc_html( $cat->name ); ?></option>
-									<?php endforeach; ?>
-								</select>
+								<label class="revora-field-label"><?php _e( 'Categories', 'revora' ); ?></label>
+								<div class="revora-category-checklist">
+									<?php 
+									$selected_cats = $db->get_review_categories( $review->id );
+									$this->render_category_checklist( 0, $selected_cats ); 
+									?>
+								</div>
 							</div>
 
 							<div class="revora-field-group">
 								<label class="revora-field-label"><?php _e( 'Rating', 'revora' ); ?></label>
 								<div class="revora-rating-selector">
 									<?php for ( $i = 1; $i <= 5; $i++ ) : ?>
-										<span class="dashicons dashicons-star-filled" data-rating="<?php echo $i; ?>"></span>
+										<?php $active_class = ( intval( $review->rating ) >= $i ) ? 'active' : ''; ?>
+										<span class="dashicons dashicons-star-filled <?php echo $active_class; ?>" data-rating="<?php echo $i; ?>"></span>
 									<?php endfor; ?>
 								</div>
 								<input type="hidden" name="rating" id="rating_input" value="<?php echo esc_attr( $review->rating ); ?>">
@@ -462,15 +467,21 @@ class Revora_Admin {
 									<input name="cat_name" id="cat_name" type="text" value="" size="40" aria-required="true" required>
 									<p><?php _e( 'The name is how it appears on your site.', 'revora' ); ?></p>
 								</div>
-								<div class="form-field term-slug-wrap">
-									<label for="cat_slug"><?php _e( 'Slug', 'revora' ); ?></label>
-									<input name="cat_slug" id="cat_slug" type="text" value="" size="40">
-									<p><?php _e( 'The "slug" is the URL-friendly version of the name. It is usually all lowercase and contains only letters, numbers, and hyphens.', 'revora' ); ?></p>
-								</div>
-								<div class="form-field term-description-wrap">
-									<label for="cat_description"><?php _e( 'Description', 'revora' ); ?></label>
-									<textarea name="cat_description" id="cat_description" rows="5" cols="40"></textarea>
-									<p><?php _e( 'The description is not prominent by default; however, some themes may show it.', 'revora' ); ?></p>
+								<div class="form-field term-parent-wrap">
+									<label for="parent_id"><?php _e( 'Parent Category', 'revora' ); ?></label>
+									<select name="parent_id" id="parent_id">
+										<option value="0"><?php _e( 'None', 'revora' ); ?></option>
+										<?php
+										$db = new Revora_DB();
+										$categories = $db->get_categories();
+										foreach ( $categories as $cat ) {
+											if ( $cat->parent_id == 0 ) {
+												echo '<option value="' . esc_attr( $cat->id ) . '">' . esc_html( $cat->name ) . '</option>';
+											}
+										}
+										?>
+									</select>
+									<p><?php _e( 'Categories, unlike tags, can have a hierarchy. You might have a Jazz category, and under that have children categories for Bebop and Big Band. Totally optional.', 'revora' ); ?></p>
 								</div>
 								<input type="hidden" name="revora_add_category" value="1">
 								<?php submit_button( __( 'Add New Category', 'revora' ) ); ?>
@@ -490,6 +501,32 @@ class Revora_Admin {
 			</div>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Render Category Checklist Helper
+	 */
+	private function render_category_checklist( $parent_id = 0, $selected = array() ) {
+		$db = new Revora_DB();
+		$categories = $db->get_categories();
+		
+		echo '<ul id="revora-category-checklist">';
+		foreach ( $categories as $cat ) {
+			$cat_parent = isset( $cat->parent_id ) ? intval( $cat->parent_id ) : 0;
+			if ( $cat_parent == $parent_id ) {
+				$checked = in_array( $cat->id, $selected ) ? 'checked' : '';
+				echo '<li>';
+				echo '<label><input type="checkbox" name="categories[]" value="' . esc_attr( $cat->id ) . '" ' . $checked . '> ' . esc_html( $cat->name ) . '</label>';
+				
+				// Recursive call for children
+				echo '<ul class="children">';
+				$this->render_category_checklist( $cat->id, $selected );
+				echo '</ul>';
+				
+				echo '</li>';
+			}
+		}
+		echo '</ul>';
 	}
 
 	/**
@@ -518,6 +555,23 @@ class Revora_Admin {
 					<tr>
 						<th scope="row"><label for="cat_slug"><?php _e( 'Slug', 'revora' ); ?></label></th>
 						<td><input name="cat_slug" type="text" id="cat_slug" value="<?php echo esc_attr( $cat->slug ); ?>" class="regular-text" required></td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="parent_id"><?php _e( 'Parent Category', 'revora' ); ?></label></th>
+						<td>
+							<select name="parent_id" id="parent_id">
+								<option value="0"><?php _e( 'None', 'revora' ); ?></option>
+								<?php
+								$all_cats = $db->get_categories();
+								foreach ( $all_cats as $other_cat ) {
+									if ( $other_cat->id == $cat->id ) continue;
+									if ( $other_cat->parent_id == 0 ) {
+										echo '<option value="' . esc_attr( $other_cat->id ) . '" ' . selected( $cat->parent_id, $other_cat->id, false ) . '>' . esc_html( $other_cat->name ) . '</option>';
+									}
+								}
+								?>
+							</select>
+						</td>
 					</tr>
 					<tr>
 						<th scope="row"><label for="cat_description"><?php _e( 'Description', 'revora' ); ?></label></th>
@@ -590,11 +644,11 @@ class Revora_Review_List_Table extends WP_List_Table {
 	public function get_columns() {
 		return array(
 			'cb'            => '<input type="checkbox" />',
-			'rating'        => __( 'Rating', 'revora' ),
-			'content'       => __( 'Review', 'revora' ),
-			'author'        => __( 'Author', 'revora' ),
-			'category_slug' => __( 'Category', 'revora' ),
-			'status'        => __( 'Status', 'revora' ),
+			'rating'     => __( 'Rating', 'revora' ),
+			'content'    => __( 'Review', 'revora' ),
+			'author'     => __( 'Author', 'revora' ),
+			'categories' => __( 'Categories', 'revora' ),
+			'status'     => __( 'Status', 'revora' ),
 			'created_at'    => __( 'Date', 'revora' ),
 		);
 	}
@@ -655,8 +709,23 @@ class Revora_Review_List_Table extends WP_List_Table {
 		);
 	}
 
-	public function column_category_slug( $item ) {
-		return '<strong>' . esc_html( ucfirst( $item->category_slug ) ) . '</strong><br><small><a href="' . admin_url( 'admin.php?page=revora-categories&s=' . urlencode( $item->category_slug ) ) . '">' . __( 'View Category', 'revora' ) . '</a></small>';
+	public function column_categories( $item ) {
+		global $wpdb;
+		$db = new Revora_DB();
+		$cat_ids = $db->get_review_categories( $item->id );
+		
+		if ( empty( $cat_ids ) ) {
+			return '—';
+		}
+
+		$categories = $wpdb->get_results( "SELECT name, slug FROM {$wpdb->prefix}revora_categories WHERE id IN (" . implode( ',', array_map( 'intval', $cat_ids ) ) . ")" );
+		
+		$links = array();
+		foreach ( $categories as $cat ) {
+			$links[] = '<strong>' . esc_html( $cat->name ) . '</strong>';
+		}
+
+		return implode( ', ', $links );
 	}
 
 	public function column_status( $item ) {
@@ -790,7 +859,10 @@ class Revora_Category_List_Table extends WP_List_Table {
 			'delete' => sprintf( '<a href="?page=%s&action=%s&cat_id=%s" onclick="return confirm(\'Are you sure?\')">%s</a>', 'revora-categories', 'delete_cat', $item->id, __( 'Delete', 'revora' ) ),
 		);
 
-		return sprintf( '<strong>%s</strong>%s',
+		$prefix = ( $item->parent_id > 0 ) ? '— ' : '';
+
+		return sprintf( '<strong>%s%s</strong>%s',
+			$prefix,
 			esc_html( $item->name ),
 			$this->row_actions( $actions )
 		);
@@ -813,7 +885,29 @@ class Revora_Category_List_Table extends WP_List_Table {
 
 	public function prepare_items() {
 		$db = new Revora_DB();
-		$this->items = $db->get_categories();
+		$categories = $db->get_categories();
+
+		// Hierarchical Sorting
+		$hierarchical = array();
+		$parents = array();
+		foreach ( $categories as $cat ) {
+			$cat_parent = isset( $cat->parent_id ) ? intval( $cat->parent_id ) : 0;
+			if ( $cat_parent == 0 ) {
+				$parents[] = $cat;
+			}
+		}
+
+		foreach ( $parents as $parent ) {
+			$hierarchical[] = $parent;
+			foreach ( $categories as $child ) {
+				$child_parent = isset( $child->parent_id ) ? intval( $child->parent_id ) : 0;
+				if ( $child_parent == $parent->id ) {
+					$hierarchical[] = $child;
+				}
+			}
+		}
+
+		$this->items = ! empty( $hierarchical ) ? $hierarchical : $categories;
 
 		$this->_column_headers = array( $this->get_columns(), array(), array() );
 	}

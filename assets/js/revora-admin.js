@@ -1,16 +1,24 @@
 jQuery(document).ready(function($) {
-    // Star Rating Selector
+    function updateStars(rating) {
+        $('.revora-rating-selector .dashicons').each(function() {
+            if ($(this).data('rating') <= rating) {
+                $(this).addClass('active');
+            } else {
+                $(this).removeClass('active');
+            }
+        });
+    }
+
+    // Star Rating Click Handler
     $('.revora-rating-selector .dashicons').on('click', function() {
         var rating = $(this).data('rating');
         $('#rating_input').val(rating);
-        
-        $('.revora-rating-selector .dashicons').removeClass('active');
-        $(this).addClass('active').prevAll().addClass('active');
+        updateStars(rating);
     });
 
-    // Initialize stars on page load (for edit page)
+    // Initialize stars on page load
     var initialRating = $('#rating_input').val();
     if (initialRating) {
-        $('.revora-rating-selector .dashicons[data-rating="' + initialRating + '"]').click();
+        updateStars(parseInt(initialRating));
     }
 });
