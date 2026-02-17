@@ -140,11 +140,27 @@ class Revora {
 	 * Enqueue Admin Assets
 	 */
 	public function enqueue_admin_assets( $hook ) {
-		if ( strpos( $hook, 'revora' ) === false ) {
-			return;
+		// Enqueue for Revora pages
+		if ( strpos( $hook, 'revora' ) !== false ) {
+			wp_enqueue_style( 'revora-admin', REVORA_URL . 'assets/css/revora-admin.css', array(), REVORA_VERSION );
+			wp_enqueue_script( 'revora-admin', REVORA_URL . 'assets/js/revora-admin.js', array( 'jquery' ), REVORA_VERSION, true );
+			
+			wp_localize_script( 'revora-admin', 'revoraAdmin', array(
+				'ajax_url' => admin_url( 'admin-ajax.php' ),
+				'nonce'    => wp_create_nonce( 'revora_admin_nonce' ),
+			) );
 		}
-		wp_enqueue_style( 'revora-admin', REVORA_URL . 'assets/css/revora-admin.css', array(), REVORA_VERSION );
-		wp_enqueue_script( 'revora-admin', REVORA_URL . 'assets/js/revora-admin.js', array( 'jquery' ), REVORA_VERSION, true );
+
+		// Enqueue deactivation survey assets only on plugins page
+		if ( 'plugins.php' === $hook ) {
+			wp_enqueue_style( 'revora-deactivation', REVORA_URL . 'assets/css/revora-deactivation.css', array(), REVORA_VERSION );
+			wp_enqueue_script( 'revora-deactivation', REVORA_URL . 'assets/js/revora-deactivation.js', array( 'jquery' ), REVORA_VERSION, true );
+			
+			wp_localize_script( 'revora-deactivation', 'revoraDeactivation', array(
+				'ajax_url' => admin_url( 'admin-ajax.php' ),
+				'nonce'    => wp_create_nonce( 'revora_deactivation_nonce' ),
+			) );
+		}
 	}
 }
 

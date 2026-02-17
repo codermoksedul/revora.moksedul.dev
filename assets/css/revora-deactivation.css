@@ -1,0 +1,182 @@
+/* Deactivation Survey Modal Styling */
+.revora-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+.revora-modal-container {
+    background: #fff;
+    width: 100%;
+    max-width: 500px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    animation: revora-modal-up 0.3s ease-out;
+}
+
+@keyframes revora-modal-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.revora-modal-header {
+    background: #f8fafc;
+    padding: 20px 25px;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: center;
+}
+
+.revora-modal-logo {
+    margin-bottom: 10px;
+}
+
+.revora-modal-logo .dashicons {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: #d64e11;
+}
+
+.revora-modal-header h2 {
+    margin: 5px 0;
+    font-size: 1.3em;
+    color: #1a202c;
+}
+
+.revora-modal-header p {
+    color: #4a5568;
+    line-height: 1.4;
+    margin: 0;
+    font-size: 13px;
+}
+
+.revora-modal-body {
+    padding: 20px 25px;
+}
+
+.revora-deactivation-reasons {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.revora-deactivation-reasons li {
+    margin-bottom: 8px;
+    position: relative;
+}
+
+.revora-deactivation-reasons input[type="radio"] {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    margin: 0;
+    transform: translateY(-50%);
+    z-index: 2;
+}
+
+.revora-deactivation-reasons label {
+    display: block;
+    padding: 10px 12px 10px 38px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 13px;
+    color: #4a5568;
+    background: #fff;
+    position: relative;
+}
+
+.revora-deactivation-reasons label:hover {
+    background: #f8fafc;
+    border-color: #cbd5e0;
+}
+
+.revora-deactivation-reasons input[type="radio"]:checked + label {
+    background: #fffaf0;
+    border-color: #d64e11;
+    color: #1a202c;
+    font-weight: 600;
+    box-shadow: 0 0 0 1px #d64e11;
+}
+
+.revora-other-reason {
+    margin-top: 10px;
+}
+
+.revora-other-reason textarea {
+    width: 100%;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 13px;
+}
+
+.revora-modal-footer {
+    padding: 15px 25px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.revora-modal-skip {
+    background: transparent;
+    border: none;
+    color: #718096;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: underline;
+}
+
+.revora-modal-skip:hover {
+    color: #4a5568;
+}
+
+.revora-modal-submit {
+    background: #d64e11;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.2s;
+}
+
+.revora-modal-submit:hover {
+    background: #b83d0d;
+}
+
+.revora-modal-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.revora-spinner {
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top: 2px solid #fff;
+    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    animation: revora-spin 1s linear infinite;
+}
+
+@keyframes revora-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

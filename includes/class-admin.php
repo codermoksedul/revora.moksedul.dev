@@ -1192,3 +1192,91 @@ class Revora_Category_List_Table extends WP_List_Table {
 		$this->_column_headers = array( $this->get_columns(), array(), array() );
 	}
 }
+
+/**
+ * Handle Deactivation Survey (Outside Main Admin Class to avoid complexity)
+ */
+add_action( 'wp_ajax_revora_submit_deactivation_feedback', function() {
+	check_ajax_referer( 'revora_deactivation_nonce', 'nonce' );
+	
+	$reason  = sanitize_text_field( $_POST['reason'] );
+	$details = sanitize_textarea_field( $_POST['details'] );
+	$email   = get_option( 'admin_email' );
+
+	// For now, we'll just send an email to the admin with the feedback
+	$message = "Revora Deactivation Feedback\n\n";
+	$message .= "Reason: " . $reason . "\n";
+	$message .= "Details: " . $details . "\n";
+	
+	wp_mail( $email, 'Revora - Deactivation Feedback', $message );
+
+	wp_send_json_success();
+});
+
+add_action( 'admin_footer', function() {
+	$screen = get_current_screen();
+	if ( ! $screen || 'plugins' !== $screen->id ) {
+		return;
+	}
+	?>
+	<div id="revora-deactivation-modal" class="revora-modal" style="display:none;">
+		<div class="revora-modal-container">
+			<div class="revora-modal-header">
+				<div class="revora-modal-logo">
+					<span class="dashicons dashicons-star-filled"></span>
+					<h2><?php _e( 'We\'re sorry to see you go', 'revora' ); ?></h2>
+				</div>
+				<p><?php _e( 'If you have a moment, please let us know why you are deactivating Revora. Your feedback helps us improve.', 'revora' ); ?></p>
+			</div>
+			<div class="revora-modal-body">
+				<form id="revora-deactivation-form">
+					<ul class="revora-deactivation-reasons">
+						<?php
+						$reasons = array(
+							'sudden-issue'   => __( 'I suddenly encountered a bug or technical issue', 'revora' ),
+							'feature-missing' => __( 'I couldn\'t find a specific feature I needed', 'revora' ),
+							'interface'      => __( 'The interface is difficult to use', 'revora' ),
+							'temporary'      => __( 'It\'s only a temporary deactivation', 'revora' ),
+							'another-plugin' => __( 'I found another plugin that works better', 'revora' ),
+							'other'          => __( 'Other', 'revora' ),
+						);
+						foreach ( $reasons as $id => $label ) : ?>
+							<li>
+								<input type="radio" name="reason" id="revora-reason-<?php echo esc_attr( $id ); ?>" value="<?php echo esc_attr( $id ); ?>" required>
+								<label for="revora-reason-<?php echo esc_attr( $id ); ?>">
+									<?php echo esc_html( $label ); ?>
+								</label>
+							</li>
+						<?php endforeach; ?>
+					</ul>
+					<div class="revora-other-reason" style="display:none;">
+						<textarea name="details" placeholder="<?php _e( 'Please share more details...', 'revora' ); ?>" rows="3"></textarea>
+					</div>
+				</form>
+			</div>
+			<div class="revora-modal-footer">
+				<button type="button" class="revora-modal-skip" id="revora-deactivate-skip"><?php _e( 'Skip & Deactivate', 'revora' ); ?></button>
+				<button type="submit" form="revora-deactivation-form" class="revora-modal-submit" id="revora-deactivate-submit">
+					<span class="revora-btn-text"><?php _e( 'Submit & Deactivate', 'revora' ); ?></span>
+					<span class="revora-spinner" style="display:none;"></span>
+				</button>
+			</div>
+		</div>
+	</div>
+	<style>
+		/* Quick inline styles for immediate injection, though we have a CSS file too */
+		#revora-deactivation-modal {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: rgba(0,0,0,0.7);
+			z-index: 999999;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+	</style>
+	<?php
+});
