@@ -78,6 +78,22 @@ class Revora_Reviews_Display_Widget extends \Elementor\Widget_Base {
 			)
 		);
 
+		$this->add_control(
+			'card_style',
+			array(
+				'label'   => __( 'Card Style', 'revora' ),
+				'type'    => \Elementor\Controls_Manager::SELECT,
+				'options' => array(
+					'classic'      => __( 'Classic', 'revora' ),
+					'modern'       => __( 'Modern', 'revora' ),
+					'boxed'        => __( 'Boxed', 'revora' ),
+					'horizontal'   => __( 'Horizontal', 'revora' ),
+					'testimonial'  => __( 'Testimonial', 'revora' ),
+				),
+				'default' => 'classic',
+			)
+		);
+
 		$this->add_responsive_control(
 			'columns',
 			array(
@@ -696,9 +712,19 @@ class Revora_Reviews_Display_Widget extends \Elementor\Widget_Base {
 		$category = ! empty( $settings['category'] ) ? $settings['category'] : '';
 		$limit = ! empty( $settings['limit'] ) ? $settings['limit'] : 6;
 		$columns = ! empty( $settings['columns'] ) ? $settings['columns'] : 3;
+		$card_style = ! empty( $settings['card_style'] ) ? $settings['card_style'] : 'classic';
 
 		// Use shortcode to render reviews
 		echo do_shortcode( '[revora_reviews category="' . esc_attr( $category ) . '" limit="' . esc_attr( $limit ) . '" columns="' . esc_attr( $columns ) . '"]' );
+
+		// Apply card style class
+		?>
+		<script>
+		jQuery(document).ready(function($) {
+			$('.elementor-element-<?php echo $this->get_id(); ?> .revora-review-card').addClass('style-<?php echo esc_js( $card_style ); ?>');
+		});
+		</script>
+		<?php
 
 		// Hide elements based on settings
 		?>

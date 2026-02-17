@@ -86,6 +86,22 @@ class Revora_Reviews_Slider_Widget extends \Elementor\Widget_Base {
 			)
 		);
 
+		$this->add_control(
+			'card_style',
+			array(
+				'label'   => __( 'Card Style', 'revora' ),
+				'type'    => \Elementor\Controls_Manager::SELECT,
+				'options' => array(
+					'classic'      => __( 'Classic', 'revora' ),
+					'modern'       => __( 'Modern', 'revora' ),
+					'boxed'        => __( 'Boxed', 'revora' ),
+					'horizontal'   => __( 'Horizontal', 'revora' ),
+					'testimonial'  => __( 'Testimonial', 'revora' ),
+				),
+				'default' => 'classic',
+			)
+		);
+
 		$this->add_responsive_control(
 			'slides_to_show',
 			array(
@@ -775,6 +791,7 @@ class Revora_Reviews_Slider_Widget extends \Elementor\Widget_Base {
 		$settings = $this->get_settings_for_display();
 		$category = ! empty( $settings['category'] ) ? $settings['category'] : '';
 		$limit = ! empty( $settings['limit'] ) ? $settings['limit'] : 10;
+		$card_style = ! empty( $settings['card_style'] ) ? $settings['card_style'] : 'classic';
 
 		$db = new Revora_DB();
 		$reviews = $db->get_approved_reviews( $category, $limit );
@@ -876,6 +893,9 @@ class Revora_Reviews_Slider_Widget extends \Elementor\Widget_Base {
 					}
 				}
 			});
+
+			// Apply card style class
+			$('.elementor-element-<?php echo esc_js( $widget_id ); ?> .revora-review-card').addClass('style-<?php echo esc_js( $card_style ); ?>');
 		});
 		</script>
 

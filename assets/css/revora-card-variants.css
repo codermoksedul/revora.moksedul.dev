@@ -1,0 +1,197 @@
+/* Revora Card Variants - Professional Review Card Styles */
+
+/* ========================================
+   Classic Style (Default)
+   ======================================== */
+.revora-review-card.style-classic {
+    /* Uses existing default styles */
+}
+
+/* ========================================
+   Modern Style (Minimal & Centered)
+   ======================================== */
+.revora-review-card.style-modern {
+    text-align: center;
+}
+
+.revora-review-card.style-modern .revora-review-header {
+    flex-direction: column;
+    align-items: center;
+}
+
+.revora-review-card.style-modern .revora-review-rating {
+    justify-content: center;
+    margin-bottom: 16px;
+    order: -1;
+}
+
+.revora-review-card.style-modern .revora-review-meta {
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    opacity: 0.7;
+    margin-top: 16px;
+    order: 3;
+}
+
+.revora-review-card.style-modern .revora-review-title {
+    font-size: 20px;
+    margin-bottom: 12px;
+}
+
+/* ========================================
+   Boxed Style (Elevated with Header)
+   ======================================== */
+.revora-review-card.style-boxed {
+    overflow: hidden;
+}
+
+.revora-review-card.style-boxed .revora-review-header {
+    background: linear-gradient(135deg, var(--revora-primary, #4566F9) 0%, var(--revora-primary-dark, #3451d9) 100%);
+    color: #ffffff;
+    padding: 20px;
+    margin: -20px -20px 20px -20px;
+    border-radius: 0;
+}
+
+.revora-review-card.style-boxed .revora-review-author,
+.revora-review-card.style-boxed .revora-review-date {
+    color: #ffffff !important;
+}
+
+.revora-review-card.style-boxed .revora-review-rating .dashicons {
+    color: #ffffff !important;
+}
+
+.revora-review-card.style-boxed .revora-review-title {
+    margin-top: 0;
+}
+
+/* ========================================
+   Horizontal Style (Side-by-Side)
+   ======================================== */
+.revora-review-card.style-horizontal {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+.revora-review-card.style-horizontal .revora-review-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.revora-review-card.style-horizontal .revora-review-meta {
+    flex-direction: column;
+    gap: 4px;
+}
+
+.revora-review-card.style-horizontal .revora-review-rating {
+    margin-top: 8px;
+}
+
+.revora-review-card.style-horizontal .revora-review-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.revora-review-card.style-horizontal .revora-review-title {
+    margin-top: 0;
+}
+
+/* Responsive - Stack on mobile */
+@media (max-width: 768px) {
+    .revora-review-card.style-horizontal {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+}
+
+/* ========================================
+   Testimonial Style (Quote Style)
+   ======================================== */
+.revora-review-card.style-testimonial {
+    text-align: center;
+    position: relative;
+    padding-top: 40px;
+}
+
+.revora-review-card.style-testimonial:before {
+    content: '"';
+    font-family: Georgia, serif;
+    font-size: 80px;
+    line-height: 1;
+    color: var(--revora-primary, #4566F9);
+    opacity: 0.15;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.revora-review-card.style-testimonial .revora-review-content {
+    font-style: italic;
+    font-size: 16px;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.revora-review-card.style-testimonial .revora-review-rating {
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.revora-review-card.style-testimonial .revora-review-header {
+    flex-direction: column;
+    align-items: center;
+    margin-top: 16px;
+}
+
+.revora-review-card.style-testimonial .revora-review-meta {
+    flex-direction: column;
+    gap: 4px;
+}
+
+.revora-review-card.style-testimonial .revora-review-author {
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.revora-review-card.style-testimonial .revora-review-date {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+.revora-review-card.style-testimonial .revora-review-title {
+    display: none; /* Hide title in testimonial style */
+}
+
+/* ========================================
+   General Enhancements
+   ======================================== */
+
+/* Ensure review body exists for horizontal layout */
+.revora-review-body {
+    flex: 1;
+}
+
+/* Smooth transitions for all cards */
+.revora-review-card {
+    transition: all 0.3s ease;
+}
+
+/* Ensure proper spacing */
+.revora-review-card .revora-review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.revora-review-card .revora-review-meta {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
