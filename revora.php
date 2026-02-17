@@ -82,6 +82,7 @@ class Revora {
 		require_once REVORA_INC . 'class-frontend.php';
 		require_once REVORA_INC . 'class-admin.php';
 		require_once REVORA_INC . 'class-shortcodes.php';
+		require_once REVORA_INC . 'class-elementor.php';
 	}
 
 	/**
