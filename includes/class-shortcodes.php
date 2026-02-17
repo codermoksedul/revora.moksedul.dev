@@ -162,11 +162,11 @@ class Revora_Shortcodes {
 				<div class="revora-form-row">
 					<div class="revora-form-field">
 						<label for="revora_name"><?php _e( 'Your Name', 'revora' ); ?></label>
-						<input type="text" name="name" id="revora_name" required>
+						<input type="text" name="name" id="revora_name" placeholder="<?php esc_attr_e( 'John Doe', 'revora' ); ?>" required>
 					</div>
 					<div class="revora-form-field">
 						<label for="revora_email"><?php _e( 'Your Email', 'revora' ); ?></label>
-						<input type="email" name="email" id="revora_email" required>
+						<input type="email" name="email" id="revora_email" placeholder="<?php esc_attr_e( 'john@example.com', 'revora' ); ?>" required>
 					</div>
 				</div>
 
@@ -196,12 +196,12 @@ class Revora_Shortcodes {
 
 				<div class="revora-form-field">
 					<label for="revora_title"><?php _e( 'Review Title', 'revora' ); ?></label>
-					<input type="text" name="title" id="revora_title" required>
+					<input type="text" name="title" id="revora_title" placeholder="<?php esc_attr_e( 'Summarize your experience', 'revora' ); ?>" required>
 				</div>
 
 				<div class="revora-form-field">
 					<label for="revora_content"><?php _e( 'Review Content', 'revora' ); ?></label>
-					<textarea name="content" id="revora_content" rows="5" required minlength="25"></textarea>
+					<textarea name="content" id="revora_content" rows="5" placeholder="<?php esc_attr_e( 'Share your detailed experience... (minimum 25 characters)', 'revora' ); ?>" required minlength="25"></textarea>
 				</div>
 
 				<div id="revora-form-message" class="revora-form-message"></div>
