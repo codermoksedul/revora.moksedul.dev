@@ -125,9 +125,6 @@ class Revora_DB {
 		return $wpdb->get_results( $wpdb->prepare( $query, $params ) );
 	}
 
-	/**
-	 * Get Approved Reviews helper
-	 */
 	public function get_approved_reviews( $category_slug = '', $limit = 10 ) {
 		return $this->get_reviews( array(
 			'category_slug' => $category_slug,
@@ -136,14 +133,40 @@ class Revora_DB {
 		) );
 	}
 
-	/**
-	 * Get Stats (Average Rating & Count)
-	 */
-	public function get_stats( $category_slug ) {
+	public function get_stats( $category_slug = null ) {
 		global $wpdb;
 
-		$query = "SELECT AVG(rating) as average, COUNT(id) as total FROM $this->table_name WHERE category_slug = %s AND status = 'approved'";
-		return $wpdb->get_row( $wpdb->prepare( $query, $category_slug ) );
+		if ( $category_slug ) {
+			$query = "SELECT AVG(rating) as average, COUNT(id) as total FROM $this->table_name WHERE category_slug = %s AND status = 'approved'";
+			return $wpdb->get_row( $wpdb->prepare( $query, $category_slug ) );
+		}
+
+		$stats = array(
+			'total'    => 0,
+			'approved' => 0,
+			'pending'  => 0,
+			'rejected' => 0,
+			'average'  => 0,
+		);
+
+		$results = $wpdb->get_results( "
+			SELECT status, COUNT(*) as count, AVG(rating) as avg_rating 
+			FROM $this->table_name 
+			GROUP BY status
+		" );
+
+		foreach ( $results as $row ) {
+			if ( isset( $stats[ $row->status ] ) ) {
+				$stats[ $row->status ] = intval( $row->count );
+			}
+			$stats['total'] += intval( $row->count );
+			
+			if ( 'approved' === $row->status ) {
+				$stats['average'] = round( floatval( $row->avg_rating ), 1 );
+			}
+		}
+
+		return (object) $stats;
 	}
 
 	/**

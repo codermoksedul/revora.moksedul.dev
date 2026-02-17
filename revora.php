@@ -140,8 +140,8 @@ class Revora {
 	 * Enqueue Admin Assets
 	 */
 	public function enqueue_admin_assets( $hook ) {
-		// Enqueue for Revora pages
-		if ( strpos( $hook, 'revora' ) !== false ) {
+		// Enqueue for Revora pages and main dashboard (for widget)
+		if ( strpos( $hook, 'revora' ) !== false || 'index.php' === $hook ) {
 			wp_enqueue_style( 'revora-admin', REVORA_URL . 'assets/css/revora-admin.css', array(), REVORA_VERSION );
 			wp_enqueue_script( 'revora-admin', REVORA_URL . 'assets/js/revora-admin.js', array( 'jquery' ), REVORA_VERSION, true );
 			

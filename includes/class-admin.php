@@ -24,6 +24,9 @@ class Revora_Admin {
 
 		// AJAX Handler for Quick Edit
 		add_action( 'wp_ajax_revora_quick_edit', array( $this, 'ajax_quick_edit' ) );
+
+		// Dashboard Widget
+		add_action( 'wp_dashboard_setup', array( $this, 'register_dashboard_widget' ) );
 	}
 
 	public function enqueue_admin_assets( $hook ) {
@@ -901,6 +904,46 @@ class Revora_Admin {
 						<?php endif; ?>
 					</div>
 				</form>
+			</div>
+		</div>
+		<?php
+	}
+
+	public function register_dashboard_widget() {
+		wp_add_dashboard_widget(
+			'revora_dashboard_stats',
+			__( 'Revora – Review Insights', 'revora' ),
+			array( $this, 'render_dashboard_widget' )
+		);
+	}
+
+	public function render_dashboard_widget() {
+		$db = new Revora_DB();
+		$stats = $db->get_stats();
+		?>
+		<div class="revora-dashboard-widget">
+			<div class="revora-stats-overview">
+				<div class="revora-stat-box revora-box-total">
+					<div class="revora-stat-number"><?php echo number_format_i18n( $stats->total ); ?></div>
+					<div class="revora-stat-text"><?php _e( 'Total Reviews', 'revora' ); ?></div>
+				</div>
+				<div class="revora-stat-box revora-box-approved">
+					<div class="revora-stat-number"><?php echo number_format_i18n( $stats->approved ); ?></div>
+					<div class="revora-stat-text"><?php _e( 'Approved', 'revora' ); ?></div>
+				</div>
+				<div class="revora-stat-box revora-box-pending <?php echo $stats->pending > 0 ? 'alert' : ''; ?>">
+					<div class="revora-stat-number"><?php echo number_format_i18n( $stats->pending ); ?></div>
+					<div class="revora-stat-text"><?php _e( 'Pending', 'revora' ); ?></div>
+				</div>
+				<div class="revora-stat-box revora-box-rating">
+					<div class="revora-stat-number"><?php echo number_format( $stats->average, 1 ); ?><span class="revora-rating-scale">/5</span></div>
+					<div class="revora-stat-text"><?php _e( 'Avg Rating', 'revora' ); ?></div>
+				</div>
+			</div>
+			<div class="revora-widget-links">
+				<a href="<?php echo admin_url( 'admin.php?page=revora' ); ?>" class="revora-link-primary">
+					<?php _e( 'View All Reviews', 'revora' ); ?> →
+				</a>
 			</div>
 		</div>
 		<?php

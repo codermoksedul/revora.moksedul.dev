@@ -352,3 +352,191 @@
 .revora-reviews-filter .search-box {
     margin-bottom: 10px;
 }
+/* Dashboard Widget - Clean Professional Design */
+.revora-dashboard-widget {
+    margin: -12px;
+    background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+}
+
+.revora-stats-overview {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    background: #fff;
+}
+
+.revora-stat-box {
+    padding: 28px 20px;
+    text-align: center;
+    border-right: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.revora-stat-box::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 3px;
+    background: currentColor;
+    transition: width 0.3s ease;
+}
+
+.revora-stat-box:hover::before {
+    width: 60%;
+}
+
+.revora-stat-box:last-child {
+    border-right: none;
+}
+
+.revora-stat-box:hover {
+    background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
+    transform: translateY(-2px);
+}
+
+.revora-stat-number {
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 10px;
+    color: #1e293b;
+    letter-spacing: -0.5px;
+}
+
+.revora-stat-text {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.revora-rating-scale {
+    font-size: 18px;
+    font-weight: 400;
+    color: #94a3b8;
+    margin-left: 2px;
+}
+
+/* Stat Box Colors with Gradients */
+.revora-box-total {
+    color: #3b82f6;
+}
+
+.revora-box-total .revora-stat-number {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.revora-box-approved {
+    color: #10b981;
+}
+
+.revora-box-approved .revora-stat-number {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.revora-box-pending {
+    color: #f59e0b;
+}
+
+.revora-box-pending .revora-stat-number {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.revora-box-pending.alert .revora-stat-number {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: pulse-number 2s ease-in-out infinite;
+}
+
+@keyframes pulse-number {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.75; }
+}
+
+.revora-box-rating {
+    color: #8b5cf6;
+}
+
+.revora-box-rating .revora-stat-number {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Widget Links */
+.revora-widget-links {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-top: 1px solid #e5e7eb;
+}
+
+.revora-link-primary {
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    color: #ffffff;
+    transition: all 0.2s ease;
+    padding: 10px 24px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.revora-link-primary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive */
+@media (max-width: 1280px) {
+    .revora-stats-overview {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .revora-stat-box:nth-child(2) {
+        border-right: none;
+    }
+    
+    .revora-stat-box:nth-child(3),
+    .revora-stat-box:nth-child(4) {
+        border-top: 1px solid #e5e7eb;
+    }
+}
+
+@media (max-width: 782px) {
+    .revora-stats-overview {
+        grid-template-columns: 1fr;
+    }
+    
+    .revora-stat-box {
+        border-right: none;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .revora-stat-box:last-child {
+        border-bottom: none;
+    }
+}
