@@ -59,10 +59,12 @@ class Revora_Elementor {
 		// Load widget files
 		require_once REVORA_PATH . 'includes/widgets/review-form-widget.php';
 		require_once REVORA_PATH . 'includes/widgets/reviews-display-widget.php';
+		require_once REVORA_PATH . 'includes/widgets/reviews-slider-widget.php';
 
 		// Register widgets
 		$widgets_manager->register( new \Revora_Review_Form_Widget() );
 		$widgets_manager->register( new \Revora_Reviews_Display_Widget() );
+		$widgets_manager->register( new \Revora_Reviews_Slider_Widget() );
 	}
 }
 
