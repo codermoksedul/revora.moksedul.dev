@@ -36,7 +36,116 @@
     border: 1px solid #ffcdd2;
 }
 
-/* Settings Page */
-.revora-settings-table th {
+/* Professional Form Layout */
+.revora-form-container {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.revora-form-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.revora-form-sidebar {
+    width: 300px;
+}
+
+.revora-card {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+    margin-bottom: 20px;
+}
+
+.revora-card-header {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.revora-card-body {
+    padding: 15px;
+}
+
+.revora-field-group {
+    margin-bottom: 20px;
+}
+
+.revora-field-group:last-child {
+    margin-bottom: 0;
+}
+
+.revora-field-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #1d2327;
+}
+
+.revora-form-main input[type="text"],
+.revora-form-main input[type="email"],
+.revora-form-main select,
+.revora-form-main textarea {
+    width: 100%;
+    padding: 8px 12px;
+}
+
+.revora-form-sidebar .revora-card-body select {
+    width: 100%;
+}
+
+.revora-sidebar-actions {
+    padding: 12px 15px;
+    background: #f6f7f7;
+    border-top: 1px solid #eee;
+    text-align: right;
+}
+
+.revora-rating-selector {
+    display: flex;
+    gap: 5px;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.revora-rating-selector .dashicons {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: #ccd0d4;
+    transition: color 0.2s;
+}
+
+.revora-rating-selector .dashicons:hover,
+.revora-rating-selector .dashicons.active {
+    color: #ffb400;
+}
+
+/* Settings Page & Form Tables */
+.revora-settings-table th,
+.form-table th {
     width: 200px;
+    font-weight: 600;
+}
+
+.wp-heading-inline + .page-title-action {
+    margin-left: 10px;
+}
+
+/* Tab counts */
+.subsubsub .count {
+    color: #646970;
+    font-weight: 400;
+}
+
+/* Search Box spacing */
+.revora-reviews-filter .search-box {
+    margin-bottom: 10px;
 }

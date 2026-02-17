@@ -13,6 +13,7 @@ class Revora_DB {
 	 * Table name
 	 */
 	private $table_name;
+	private $cat_table;
 
 	/**
 	 * Constructor
@@ -20,6 +21,7 @@ class Revora_DB {
 	public function __construct() {
 		global $wpdb;
 		$this->table_name = $wpdb->prefix . 'revora_reviews';
+		$this->cat_table  = $wpdb->prefix . 'revora_categories';
 	}
 
 	/**
@@ -47,6 +49,19 @@ class Revora_DB {
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql );
+
+		// Create Categories Table
+		$cat_sql = "CREATE TABLE $this->cat_table (
+			id bigint(20) NOT NULL AUTO_INCREMENT,
+			name varchar(255) NOT NULL,
+			slug varchar(255) NOT NULL,
+			description text,
+			created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+			PRIMARY KEY (id),
+			UNIQUE KEY slug (slug)
+		) $charset_collate;";
+
+		dbDelta( $cat_sql );
 	}
 
 	/**
@@ -133,5 +148,69 @@ class Revora_DB {
 	public function delete_review( $id ) {
 		global $wpdb;
 		return $wpdb->delete( $this->table_name, array( 'id' => $id ) );
+	}
+
+	public function get_review( $id ) {
+		global $wpdb;
+		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $this->table_name WHERE id = %d", $id ) );
+	}
+
+	public function update_review( $id, $data ) {
+		global $wpdb;
+		return $wpdb->update( $this->table_name, $data, array( 'id' => $id ) );
+	}
+
+	/**
+	 * Get Total Counts by Status
+	 */
+	public function get_counts() {
+		global $wpdb;
+		$results = $wpdb->get_results( "SELECT status, COUNT(id) as count FROM $this->table_name GROUP BY status", ARRAY_A );
+		
+		$counts = array(
+			'all'      => 0,
+			'pending'  => 0,
+			'approved' => 0,
+			'rejected' => 0,
+		);
+
+		foreach ( $results as $row ) {
+			if ( isset( $counts[ $row['status'] ] ) ) {
+				$counts[ $row['status'] ] = (int) $row['count'];
+			}
+			$counts['all'] += (int) $row['count'];
+		}
+
+		return $counts;
+	}
+
+	/**
+	 * CATEGORIES METHODS
+	 */
+
+	public function insert_category( $data ) {
+		global $wpdb;
+		return $wpdb->insert( $this->cat_table, $data );
+	}
+
+	public function get_categories( $args = array() ) {
+		global $wpdb;
+		$query = "SELECT * FROM $this->cat_table ORDER BY name ASC";
+		return $wpdb->get_results( $query );
+	}
+
+	public function get_category( $id ) {
+		global $wpdb;
+		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $this->cat_table WHERE id = %d", $id ) );
+	}
+
+	public function update_category( $id, $data ) {
+		global $wpdb;
+		return $wpdb->update( $this->cat_table, $data, array( 'id' => $id ) );
+	}
+
+	public function delete_category( $id ) {
+		global $wpdb;
+		return $wpdb->delete( $this->cat_table, array( 'id' => $id ) );
 	}
 }

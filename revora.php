@@ -45,7 +45,19 @@ class Revora {
 	 */
 	private function __construct() {
 		$this->includes();
+		$this->init_classes();
 		$this->init_hooks();
+	}
+
+	/**
+	 * Initialize Classes
+	 */
+	private function init_classes() {
+		if ( is_admin() ) {
+			new Revora_Admin();
+		}
+		new Revora_Ajax();
+		new Revora_Frontend();
 	}
 
 	/**
@@ -115,10 +127,11 @@ class Revora {
 	 * Enqueue Admin Assets
 	 */
 	public function enqueue_admin_assets( $hook ) {
-		if ( 'toplevel_page_revora' !== $hook ) {
+		if ( strpos( $hook, 'revora' ) === false ) {
 			return;
 		}
 		wp_enqueue_style( 'revora-admin', REVORA_URL . 'assets/css/revora-admin.css', array(), REVORA_VERSION );
+		wp_enqueue_script( 'revora-admin', REVORA_URL . 'assets/js/revora-admin.js', array( 'jquery' ), REVORA_VERSION, true );
 	}
 }
 
