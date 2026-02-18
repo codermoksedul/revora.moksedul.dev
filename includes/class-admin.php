@@ -772,10 +772,9 @@ class Revora_Admin {
 	 */
 	public function render_settings_page() {
 		$settings = wp_parse_args( get_option( 'revora_settings', array() ), $this->get_settings_defaults() );
-		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'general';
+		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'moderation';
 		
 		$tabs = array(
-			'general'    => array( 'label' => __( 'General', 'revora' ), 'icon' => 'admin-settings' ),
 			'moderation' => array( 'label' => __( 'Moderation', 'revora' ), 'icon' => 'admin-users' ),
 			'emails'     => array( 'label' => __( 'Emails', 'revora' ), 'icon' => 'email-alt' ),
 			'shortcodes' => array( 'label' => __( 'Shortcodes', 'revora' ), 'icon' => 'editor-code' ),
@@ -800,47 +799,7 @@ class Revora_Admin {
 					?>
 
 					<div class="revora-settings-content">
-						<?php if ( 'general' === $active_tab ) : ?>
-							<div class="revora-card">
-								<div class="revora-card-header"><?php _e( 'Appearance', 'revora' ); ?></div>
-								<div class="revora-card-body">
-									<div class="revora-field-group">
-										<label class="revora-field-label"><?php _e( 'Primary Color', 'revora' ); ?></label>
-										<input type="color" name="revora_settings[primary_color]" value="<?php echo esc_attr( $settings['primary_color'] ); ?>" />
-										<p class="description"><?php _e( 'Used for buttons and UI highlights.', 'revora' ); ?></p>
-									</div>
-									<div class="revora-field-group">
-										<label class="revora-field-label"><?php _e( 'Star Color', 'revora' ); ?></label>
-										<input type="color" name="revora_settings[star_color]" value="<?php echo esc_attr( $settings['star_color'] ); ?>" />
-										<p class="description"><?php _e( 'Color for filled stars.', 'revora' ); ?></p>
-									</div>
-									<div class="revora-field-group">
-										<label class="revora-field-label"><?php _e( 'Reviews Layout', 'revora' ); ?></label>
-										<select name="revora_settings[layout]">
-											<option value="list" <?php selected( $settings['layout'], 'list' ); ?>><?php _e( 'Modern List', 'revora' ); ?></option>
-											<option value="grid" <?php selected( $settings['layout'], 'grid' ); ?>><?php _e( 'Responsive Grid', 'revora' ); ?></option>
-										</select>
-									</div>
-									<div class="revora-field-group">
-										<label class="revora-field-label"><?php _e( 'Advanced Options', 'revora' ); ?></label>
-										<label>
-											<input type="checkbox" name="revora_settings[show_stars]" value="1" <?php checked( $settings['show_stars'], '1' ); ?>>
-											<?php _e( 'Show Star Ratings on Frontend', 'revora' ); ?>
-										</label>
-										<br>
-										<label>
-											<input type="checkbox" name="revora_settings[enable_schema]" value="1" <?php checked( $settings['enable_schema'], '1' ); ?>>
-											<?php _e( 'Enable Schema.org SEO Markup', 'revora' ); ?>
-										</label>
-									</div>
-									<div class="revora-field-group">
-										<label class="revora-field-label"><?php _e( 'Custom CSS', 'revora' ); ?></label>
-										<textarea name="revora_settings[custom_css]" rows="8" class="large-text code"><?php echo esc_textarea( $settings['custom_css'] ); ?></textarea>
-									</div>
-								</div>
-							</div>
-
-						<?php elseif ( 'moderation' === $active_tab ) : ?>
+						<?php if ( 'moderation' === $active_tab ) : ?>
 							<div class="revora-card">
 								<div class="revora-card-header"><?php _e( 'Moderation Settings', 'revora' ); ?></div>
 								<div class="revora-card-body">
