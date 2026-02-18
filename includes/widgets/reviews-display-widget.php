@@ -714,16 +714,12 @@ class Revora_Reviews_Display_Widget extends \Elementor\Widget_Base {
 		$columns = ! empty( $settings['columns'] ) ? $settings['columns'] : 3;
 		$card_style = ! empty( $settings['card_style'] ) ? $settings['card_style'] : 'classic';
 
+
 		// Use shortcode to render reviews
-		echo do_shortcode( '[revora_reviews category="' . esc_attr( $category ) . '" limit="' . esc_attr( $limit ) . '" columns="' . esc_attr( $columns ) . '"]' );
+		echo do_shortcode( '[revora_reviews category="' . esc_attr( $category ) . '" limit="' . esc_attr( $limit ) . '" columns="' . esc_attr( $columns ) . '" card_style="' . esc_attr( $card_style ) . '"]' );
 
 		// Apply card style class
 		?>
-		<script>
-		jQuery(document).ready(function($) {
-			$('.elementor-element-<?php echo $this->get_id(); ?> .revora-review-card').addClass('style-<?php echo esc_js( $card_style ); ?>');
-		});
-		</script>
 		<?php
 
 		// Hide elements based on settings

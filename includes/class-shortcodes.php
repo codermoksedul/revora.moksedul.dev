@@ -20,9 +20,10 @@ class Revora_Shortcodes {
 	 */
 	public function render_reviews_shortcode( $atts ) {
 		$atts = shortcode_atts( array(
-			'category' => '',
-			'limit'    => 6,
-			'columns'  => 3,
+			'category'   => '',
+			'limit'      => 6,
+			'columns'    => 3,
+			'card_style' => 'classic',
 		), $atts, 'revora_reviews' );
 
 		$db = new Revora_DB();
@@ -50,13 +51,14 @@ class Revora_Shortcodes {
 		<div class="revora-reviews-container" 
 			data-category="<?php echo esc_attr( $atts['category'] ); ?>" 
 			data-limit="<?php echo esc_attr( $atts['limit'] ); ?>"
-			data-columns="<?php echo esc_attr( $atts['columns'] ); ?>">
+			data-columns="<?php echo esc_attr( $atts['columns'] ); ?>"
+			data-card-style="<?php echo esc_attr( $atts['card_style'] ); ?>">
 			
 			<div class="revora-reviews-grid revora-grid-cols-<?php echo esc_attr( $atts['columns'] ); ?>" 
 				style="--revora-primary: <?php echo esc_attr( $settings['primary_color'] ); ?>; --revora-star-filled: <?php echo esc_attr( $settings['star_color'] ); ?>;">
 				
 				<?php foreach ( $reviews as $review ) : ?>
-					<div class="revora-review-card">
+					<div class="revora-review-card style-<?php echo esc_attr( $atts['card_style'] ); ?>">
 						<div class="revora-review-header">
 							<div class="revora-review-meta">
 								<span class="revora-review-author"><?php echo esc_html( $review->name ); ?></span>

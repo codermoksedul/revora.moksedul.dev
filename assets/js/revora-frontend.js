@@ -86,6 +86,7 @@ jQuery(document).ready(function($) {
         const $grid = $container.find('.revora-reviews-grid');
         const category = $container.data('category') || '';
         const limit = parseInt($container.data('limit')) || 6;
+        const card_style = $container.data('card-style') || 'classic';
         let page = parseInt($btn.data('page')) || 1;
 
         $btn.prop('disabled', true);
@@ -98,7 +99,8 @@ jQuery(document).ready(function($) {
                 action: 'revora_load_more',
                 category: category,
                 page: page,
-                limit: limit
+                limit: limit,
+                card_style: card_style
             },
             success: function(response) {
                 if (response.success) {

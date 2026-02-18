@@ -109,6 +109,7 @@ class Revora_Ajax {
 		$category = isset( $_POST['category'] ) ? sanitize_text_field( $_POST['category'] ) : '';
 		$page = isset( $_POST['page'] ) ? intval( $_POST['page'] ) : 1;
 		$limit = isset( $_POST['limit'] ) ? intval( $_POST['limit'] ) : 6;
+		$card_style = isset( $_POST['card_style'] ) ? sanitize_text_field( $_POST['card_style'] ) : 'classic';
 		$offset = $page * $limit;
 
 		$db = new Revora_DB();
@@ -121,12 +122,13 @@ class Revora_Ajax {
 
 		if ( empty( $reviews ) ) {
 			wp_send_json_error( array( 'message' => __( 'No more reviews.', 'revora' ) ) );
+			return;
 		}
 
 		ob_start();
 		foreach ( $reviews as $review ) :
 			?>
-			<div class="revora-review-card">
+			<div class="revora-review-card style-<?php echo esc_attr( $card_style ); ?>">
 				<div class="revora-review-header">
 					<div class="revora-review-meta">
 						<span class="revora-review-author"><?php echo esc_html( $review->name ); ?></span>

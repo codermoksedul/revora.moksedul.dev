@@ -813,7 +813,7 @@ class Revora_Reviews_Slider_Widget extends \Elementor\Widget_Base {
 				<div class="swiper-wrapper">
 					<?php foreach ( $reviews as $review ) : ?>
 						<div class="swiper-slide">
-							<div class="revora-review-card">
+							<div class="revora-review-card style-<?php echo esc_attr( $card_style ); ?>">
 								<div class="revora-review-header">
 									<div class="revora-review-meta">
 										<?php if ( 'yes' === $settings['show_author'] ) : ?>
@@ -855,53 +855,79 @@ class Revora_Reviews_Slider_Widget extends \Elementor\Widget_Base {
 
 		<script>
 		jQuery(document).ready(function($) {
-			new Swiper('.revora-slider-<?php echo esc_js( $widget_id ); ?>', {
-				slidesPerView: <?php echo esc_js( $settings['slides_to_show_mobile'] ?: 1 ); ?>,
-				slidesPerGroup: <?php echo esc_js( $settings['slides_to_scroll'] ); ?>,
-				spaceBetween: <?php echo esc_js( $settings['space_between_mobile'] ?: 16 ); ?>,
-				speed: <?php echo esc_js( $settings['speed'] ); ?>,
-				effect: '<?php echo esc_js( $settings['effect'] ); ?>',
-				loop: <?php echo 'yes' === $settings['loop'] ? 'true' : 'false'; ?>,
-				<?php if ( 'yes' === $settings['autoplay'] ) : ?>
-				autoplay: {
-					delay: <?php echo esc_js( $settings['autoplay_speed'] ); ?>,
-					disableOnInteraction: false,
-					pauseOnMouseEnter: <?php echo 'yes' === $settings['pause_on_hover'] ? 'true' : 'false'; ?>,
-				},
-				<?php endif; ?>
-				<?php if ( 'yes' === $settings['show_arrows'] ) : ?>
-				navigation: {
-					nextEl: '.revora-slider-<?php echo esc_js( $widget_id ); ?> .swiper-button-next',
-					prevEl: '.revora-slider-<?php echo esc_js( $widget_id ); ?> .swiper-button-prev',
-				},
-				<?php endif; ?>
-				<?php if ( 'yes' === $settings['show_pagination'] ) : ?>
-				pagination: {
-					el: '.revora-slider-<?php echo esc_js( $widget_id ); ?> .swiper-pagination',
-					type: '<?php echo esc_js( $settings['pagination_type'] ); ?>',
-					clickable: true,
-				},
-				<?php endif; ?>
-				breakpoints: {
-					768: {
-						slidesPerView: <?php echo esc_js( $settings['slides_to_show_tablet'] ?: 2 ); ?>,
-						spaceBetween: <?php echo esc_js( $settings['space_between_tablet'] ?: 20 ); ?>,
+			var initSwiper = function() {
+				var swiper = new Swiper('.revora-slider-<?php echo esc_js( $widget_id ); ?>', {
+					slidesPerView: <?php echo ! empty( $settings['slides_to_show_mobile'] ) ? intval( $settings['slides_to_show_mobile'] ) : 1; ?>,
+					slidesPerGroup: <?php echo ! empty( $settings['slides_to_scroll'] ) ? intval( $settings['slides_to_scroll'] ) : 1; ?>,
+					spaceBetween: <?php echo ! empty( $settings['space_between_mobile'] ) ? intval( $settings['space_between_mobile'] ) : 16; ?>,
+					speed: <?php echo ! empty( $settings['speed'] ) ? intval( $settings['speed'] ) : 500; ?>,
+					effect: '<?php echo esc_js( $settings['effect'] ); ?>',
+					loop: <?php echo 'yes' === $settings['loop'] ? 'true' : 'false'; ?>,
+					observer: true,
+					observeParents: true,
+					<?php if ( 'yes' === $settings['autoplay'] ) : ?>
+					autoplay: {
+						delay: <?php echo ! empty( $settings['autoplay_speed'] ) ? intval( $settings['autoplay_speed'] ) : 3000; ?>,
+						disableOnInteraction: false,
+						pauseOnMouseEnter: <?php echo 'yes' === $settings['pause_on_hover'] ? 'true' : 'false'; ?>,
 					},
-					1024: {
-						slidesPerView: <?php echo esc_js( $settings['slides_to_show'] ?: 3 ); ?>,
-						spaceBetween: <?php echo esc_js( $settings['space_between'] ?: 24 ); ?>,
+					<?php endif; ?>
+					<?php if ( 'yes' === $settings['show_arrows'] ) : ?>
+					navigation: {
+						nextEl: '.revora-slider-<?php echo esc_js( $widget_id ); ?> .swiper-button-next',
+						prevEl: '.revora-slider-<?php echo esc_js( $widget_id ); ?> .swiper-button-prev',
+					},
+					<?php endif; ?>
+					<?php if ( 'yes' === $settings['show_pagination'] ) : ?>
+					pagination: {
+						el: '.revora-slider-<?php echo esc_js( $widget_id ); ?> .swiper-pagination',
+						type: '<?php echo esc_js( $settings['pagination_type'] ); ?>',
+						clickable: true,
+					},
+					<?php endif; ?>
+					breakpoints: {
+						768: {
+							slidesPerView: <?php echo ! empty( $settings['slides_to_show_tablet'] ) ? intval( $settings['slides_to_show_tablet'] ) : 2; ?>,
+							spaceBetween: <?php echo ! empty( $settings['space_between_tablet'] ) ? intval( $settings['space_between_tablet'] ) : 20; ?>,
+						},
+						1024: {
+							slidesPerView: <?php echo ! empty( $settings['slides_to_show'] ) ? intval( $settings['slides_to_show'] ) : 3; ?>,
+							spaceBetween: <?php echo ! empty( $settings['space_between'] ) ? intval( $settings['space_between'] ) : 24; ?>,
+						}
 					}
-				}
-			});
+				});
+			};
 
-			// Apply card style class
-			$('.elementor-element-<?php echo esc_js( $widget_id ); ?> .revora-review-card').addClass('style-<?php echo esc_js( $card_style ); ?>');
+			// Initialize on document ready
+			initSwiper();
+
+			// Re-initialize on Elementor edit mode
+			if ( window.elementorFrontend ) {
+				elementorFrontend.hooks.addAction( 'frontend/element_ready/revora-reviews-slider.default', function($scope){
+					initSwiper();
+				});
+			}
 		});
 		</script>
 
 		<style>
 		.revora-slider-container {
 			position: relative;
+			width: 100%;
+			overflow: hidden;
+		}
+		.revora-slider-<?php echo esc_attr( $widget_id ); ?> {
+			width: 100%;
+			height: 100%;
+		}
+		.revora-slider-<?php echo esc_attr( $widget_id ); ?> .swiper-slide {
+			height: auto;
+			display: flex;
+			flex-direction: column;
+		}
+		.revora-slider-<?php echo esc_attr( $widget_id ); ?> .revora-review-card {
+			flex: 1;
+			width: 100%;
 		}
 		.revora-slider-container.arrows-outside {
 			padding: 0 60px;
