@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && pnpm package-plugin",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "package-plugin": "node scripts/package-plugin.js"
   },
   "dependencies": {
     "lucide-react": "^0.574.0",
@@ -19,8 +20,10 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "archiver": "^7.0.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "fs-extra": "^11.3.3",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

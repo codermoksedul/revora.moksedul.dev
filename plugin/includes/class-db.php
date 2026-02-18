@@ -104,20 +104,32 @@ class Revora_DB {
 
 		$args = wp_parse_args( $args, $defaults );
 
-		$query = "SELECT * FROM $this->table_name WHERE 1=1";
 		$params = array();
 
 		if ( ! empty( $args['category_slug'] ) ) {
-			$query .= " AND category_slug = %s";
+			// Join with relationship tables for category filtering
+			$query = "SELECT DISTINCT r.* FROM $this->table_name r
+					  INNER JOIN $this->rel_table rc ON r.id = rc.review_id
+					  INNER JOIN $this->cat_table c ON rc.cat_id = c.id
+					  WHERE 1=1 AND c.slug = %s";
 			$params[] = $args['category_slug'];
+		} else {
+			// Standard query
+			$query = "SELECT r.* FROM $this->table_name r WHERE 1=1";
 		}
 
 		if ( ! empty( $args['status'] ) ) {
-			$query .= " AND status = %s";
+			$query .= " AND r.status = %s";
 			$params[] = $args['status'];
 		}
 
-		$query .= " ORDER BY {$args['orderby']} {$args['order']}";
+		// Ensure orderby column is prefixed with table alias to avoid ambiguity
+		$orderby = $args['orderby'];
+		if ( strpos( $orderby, '.' ) === false ) {
+			$orderby = 'r.' . $orderby;
+		}
+
+		$query .= " ORDER BY $orderby {$args['order']}";
 		$query .= " LIMIT %d OFFSET %d";
 		$params[] = $args['limit'];
 		$params[] = $args['offset'];
@@ -138,7 +150,10 @@ class Revora_DB {
 		
 		if ( ! empty( $category_slug ) ) {
 			return (int) $wpdb->get_var( $wpdb->prepare(
-				"SELECT COUNT(*) FROM $this->table_name WHERE status = 'approved' AND category_slug = %s",
+				"SELECT COUNT(DISTINCT r.id) FROM $this->table_name r
+				 INNER JOIN $this->rel_table rc ON r.id = rc.review_id
+				 INNER JOIN $this->cat_table c ON rc.cat_id = c.id
+				 WHERE r.status = 'approved' AND c.slug = %s",
 				$category_slug
 			) );
 		}
@@ -150,7 +165,11 @@ class Revora_DB {
 		global $wpdb;
 
 		if ( $category_slug ) {
-			$query = "SELECT AVG(rating) as average, COUNT(id) as total FROM $this->table_name WHERE category_slug = %s AND status = 'approved'";
+			$query = "SELECT AVG(r.rating) as average, COUNT(DISTINCT r.id) as total 
+					  FROM $this->table_name r
+					  INNER JOIN $this->rel_table rc ON r.id = rc.review_id
+					  INNER JOIN $this->cat_table c ON rc.cat_id = c.id
+					  WHERE c.slug = %s AND r.status = 'approved'";
 			return $wpdb->get_row( $wpdb->prepare( $query, $category_slug ) );
 		}
 
@@ -188,7 +207,12 @@ class Revora_DB {
 	public function get_rating_breakdown( $category_slug ) {
 		global $wpdb;
 
-		$query = "SELECT rating, COUNT(id) as count FROM $this->table_name WHERE category_slug = %s AND status = 'approved' GROUP BY rating";
+		$query = "SELECT r.rating, COUNT(DISTINCT r.id) as count 
+				  FROM $this->table_name r
+				  INNER JOIN $this->rel_table rc ON r.id = rc.review_id
+				  INNER JOIN $this->cat_table c ON rc.cat_id = c.id
+				  WHERE c.slug = %s AND r.status = 'approved' 
+				  GROUP BY r.rating";
 		return $wpdb->get_results( $wpdb->prepare( $query, $category_slug ) );
 	}
 
