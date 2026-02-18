@@ -1160,8 +1160,16 @@ class Revora_Category_List_Table extends WP_List_Table {
 
 	public function column_count( $item ) {
 		global $wpdb;
-		$table_name = $wpdb->prefix . 'revora_reviews';
-		$count = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(id) FROM $table_name WHERE category_slug = %s", $item->slug ) );
+		
+		// Count distinct reviews associated with this category via the relationship table
+		$count = $wpdb->get_var( $wpdb->prepare( "
+			SELECT COUNT(DISTINCT r.id) 
+			FROM {$wpdb->prefix}revora_reviews r
+			INNER JOIN {$wpdb->prefix}revora_review_categories rc ON r.id = rc.review_id
+			INNER JOIN {$wpdb->prefix}revora_categories c ON rc.cat_id = c.id
+			WHERE c.slug = %s
+		", $item->slug ) );
+		
 		return (int) $count;
 	}
 
