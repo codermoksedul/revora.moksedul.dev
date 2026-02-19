@@ -297,10 +297,36 @@ class Revora_DB {
 	}
 
 	public function delete_category( $id ) {
-		global $wpdb;
 		// Also delete relationships
 		$wpdb->delete( $this->rel_table, array( 'cat_id' => $id ) );
 		return $wpdb->delete( $this->cat_table, array( 'id' => $id ) );
+	}
+
+	/**
+	 * Get category by slug
+	 */
+	public function get_category_by_slug( $slug ) {
+		global $wpdb;
+		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $this->cat_table WHERE slug = %s", $slug ) );
+	}
+
+	/**
+	 * Ensure category exists and return its ID
+	 */
+	public function ensure_category_exists( $slug, $name = '' ) {
+		$cat = $this->get_category_by_slug( $slug );
+		if ( $cat ) {
+			return $cat->id;
+		}
+
+		if ( empty( $name ) ) {
+			$name = ucwords( str_replace( '-', ' ', $slug ) );
+		}
+
+		return $this->insert_category( array(
+			'name' => $name,
+			'slug' => $slug,
+		) );
 	}
 
 	/**

@@ -157,9 +157,10 @@ class Revora_Shortcodes {
 			<form id="revora-review-form" class="revora-form">
 				<?php wp_nonce_field( 'revora_submit_nonce', 'nonce' ); ?>
 				
-				<?php if ( $has_category ) : ?>
-					<input type="hidden" name="category_slug" value="<?php echo esc_attr( $atts['category'] ); ?>">
-				<?php endif; ?>
+				<?php 
+				$category_slug = ! empty( $atts['category'] ) ? $atts['category'] : 'unknown';
+				?>
+				<input type="hidden" name="category_slug" value="<?php echo esc_attr( $category_slug ); ?>">
 				
 				<div class="revora-form-row">
 					<div class="revora-form-field">
@@ -171,33 +172,6 @@ class Revora_Shortcodes {
 						<input type="email" name="email" id="revora_email" placeholder="<?php esc_attr_e( 'john@example.com', 'revora' ); ?>" required>
 					</div>
 				</div>
-
-				<?php if ( $has_category ) : 
-					// Find the category name for display
-					$current_cat_name = '';
-					foreach ( $categories as $cat ) {
-						if ( $cat->slug === $atts['category'] ) {
-							$current_cat_name = $cat->name;
-							break;
-						}
-					}
-					?>
-					<div class="revora-form-field">
-						<label><?php _e( 'Category', 'revora' ); ?></label>
-						<input type="text" value="<?php echo esc_attr( $current_cat_name ); ?>" disabled style="background-color: #f3f4f6; cursor: not-allowed; opacity: 0.7;">
-						<p class="description" style="font-size: 12px; margin-top: 5px; color: #666;"><?php _e( 'This review will be posted to the above category.', 'revora' ); ?></p>
-					</div>
-				<?php else : ?>
-					<div class="revora-form-field">
-						<label for="revora_cat"><?php _e( 'Category', 'revora' ); ?></label>
-						<select name="category_slug" id="revora_cat" required>
-							<option value=""><?php _e( 'Select Category', 'revora' ); ?></option>
-							<?php foreach ( $categories as $cat ) : ?>
-								<option value="<?php echo esc_attr( $cat->slug ); ?>"><?php echo esc_html( $cat->name ); ?></option>
-							<?php endforeach; ?>
-						</select>
-					</div>
-				<?php endif; ?>
 
 				<div class="revora-form-field">
 					<label><?php _e( 'Rating', 'revora' ); ?></label>

@@ -60,9 +60,16 @@ class Revora_Ajax {
 		$data['status'] = ( isset( $settings['auto_approve'] ) && '1' === $settings['auto_approve'] ) ? 'approved' : 'pending';
 
 		$db = new Revora_DB();
+		
+		// Ensure category exists and get its ID
+		$cat_slug = ! empty( $data['category_slug'] ) ? $data['category_slug'] : 'unknown';
+		$cat_id = $db->ensure_category_exists( $cat_slug );
+		
 		$inserted = $db->insert_review( $data );
 
 		if ( $inserted ) {
+			// Link review to category
+			$db->set_review_categories( $inserted, array( $cat_id ) );
 			// Trigger email notification
 			$this->send_notifications( $data );
 
