@@ -659,29 +659,25 @@ class Revora_Review_Form_Widget extends \Elementor\Widget_Base {
 	}
 
 	protected function render() {
-		$settings = $this->get_settings_for_display();
-		$category = ! empty( $settings['category'] ) ? $settings['category'] : '';
+		$settings   = $this->get_settings_for_display();
+		$category   = ! empty( $settings['category'] ) ? $settings['category'] : '';
+		$widget_id  = $this->get_id();
 
 		// Use shortcode to render form
 		echo do_shortcode( '[revora_form category="' . esc_attr( $category ) . '"]' );
 
-		// Override title if needed
+		// Hide title via enqueued inline style (no inline <style> tag)
 		if ( 'yes' !== $settings['show_title'] ) {
-			?>
-			<style>
-				.elementor-element-<?php echo $this->get_id(); ?> .revora-form-container h3 {
-					display: none;
-				}
-			</style>
-			<?php
+			wp_add_inline_style(
+				'revora-frontend',
+				'.elementor-element-' . esc_attr( $widget_id ) . ' .revora-form-container h3 { display: none; }'
+			);
 		} elseif ( ! empty( $settings['form_title'] ) ) {
-			?>
-			<script>
-				jQuery(document).ready(function($) {
-					$('.elementor-element-<?php echo $this->get_id(); ?> .revora-form-container h3').text('<?php echo esc_js( $settings['form_title'] ); ?>');
-				});
-			</script>
-			<?php
+			// Override title text via enqueued inline script (no inline <script> tag)
+			wp_add_inline_script(
+				'revora-frontend',
+				'jQuery(document).ready(function($){$(".elementor-element-' . esc_attr( $widget_id ) . ' .revora-form-container h3").text(' . wp_json_encode( $settings['form_title'] ) . ');});'
+			);
 		}
 	}
 }

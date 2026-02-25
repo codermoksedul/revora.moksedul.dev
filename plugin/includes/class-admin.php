@@ -108,7 +108,6 @@ class Revora_Admin {
 			'show_stars'     => '1',
 			'email_subject'  => __( 'New Review Received', 'revora' ),
 			'email_template' => __( "Hello Admin,\n\nA new review has been submitted for your approval.\n\nAuthor: {author}\nRating: {rating}\nContent: {content}\n\nYou can moderate it here: {admin_url}", 'revora' ),
-			'custom_css'     => '',
 		);
 	}
 
@@ -116,28 +115,41 @@ class Revora_Admin {
 	 * Sanitize Settings (Fixes Checkbox issue)
 	 */
 	public function sanitize_settings( $input ) {
-		$output   = array();
-		$defaults = $this->get_settings_defaults();
+		$sanitized = array();
 
-		// For checkboxes, we want them to be '0' if missing from POST
-		$checkboxes = array( 'enable_schema', 'auto_approve', 'show_stars' );
+		$sanitized['primary_color'] = isset( $input['primary_color'] )
+			? ( sanitize_hex_color( $input['primary_color'] ) ?? '#d64e11' )
+			: '#d64e11';
 
-		foreach ( $defaults as $key => $default ) {
-			if ( in_array( $key, $checkboxes ) ) {
-				$output[ $key ] = isset( $input[ $key ] ) ? '1' : '0';
-			} elseif ( isset( $input[ $key ] ) ) {
-				$output[ $key ] = sanitize_text_field( $input[ $key ] );
-			} else {
-				$output[ $key ] = $default;
-			}
-		}
+		$sanitized['star_color'] = isset( $input['star_color'] )
+			? ( sanitize_hex_color( $input['star_color'] ) ?? '#ffb400' )
+			: '#ffb400';
 
-		// Specific sanitization for CSS
-		if ( isset( $input['custom_css'] ) ) {
-			$output['custom_css'] = wp_strip_all_tags( $input['custom_css'] );
-		}
+		$allowed_layouts = array( 'list', 'grid', 'masonry' );
+		$sanitized['layout'] = isset( $input['layout'] ) && in_array( $input['layout'], $allowed_layouts, true )
+			? $input['layout']
+			: 'list';
 
-		return $output;
+		$sanitized['admin_email'] = isset( $input['admin_email'] )
+			? sanitize_email( $input['admin_email'] )
+			: get_option( 'admin_email' );
+
+		$sanitized['email_subject'] = isset( $input['email_subject'] )
+			? sanitize_text_field( $input['email_subject'] )
+			: '';
+
+		$sanitized['email_template'] = isset( $input['email_template'] )
+			? sanitize_textarea_field( $input['email_template'] )
+			: '';
+
+		// Checkboxes — '1' if checked, '0' if absent
+		$sanitized['enable_schema'] = ! empty( $input['enable_schema'] ) ? '1' : '0';
+		$sanitized['auto_approve']  = ! empty( $input['auto_approve'] )  ? '1' : '0';
+		$sanitized['show_stars']    = ! empty( $input['show_stars'] )    ? '1' : '0';
+
+		// custom_css intentionally removed — use Customizer / Site Editor instead.
+
+		return $sanitized;
 	}
 
 	/**
@@ -147,13 +159,13 @@ class Revora_Admin {
 		if ( isset( $_POST['revora_add_new'] ) && check_admin_referer( 'revora_add_review', 'revora_nonce' ) ) {
 			$db = new Revora_DB();
 			$data = array(
-				'category_slug' => sanitize_text_field( $_POST['category_slug'] ),
-				'name'          => sanitize_text_field( $_POST['name'] ),
-				'email'         => sanitize_email( $_POST['email'] ),
-				'rating'        => intval( $_POST['rating'] ),
-				'title'         => sanitize_text_field( $_POST['title'] ),
-				'content'       => sanitize_textarea_field( $_POST['content'] ),
-				'ip_address'    => $_SERVER['REMOTE_ADDR'],
+				'category_slug' => sanitize_text_field( wp_unslash( $_POST['category_slug'] ?? '' ) ),
+				'name'          => sanitize_text_field( wp_unslash( $_POST['name'] ?? '' ) ),
+				'email'         => sanitize_email( wp_unslash( $_POST['email'] ?? '' ) ),
+				'rating'        => intval( $_POST['rating'] ?? 0 ),
+				'title'         => sanitize_text_field( wp_unslash( $_POST['title'] ?? '' ) ),
+				'content'       => sanitize_textarea_field( wp_unslash( $_POST['content'] ?? '' ) ),
+				'ip_address'    => isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '',
 				'status'        => 'approved', // Admin added reviews are approved by default
 			);
 			
@@ -172,13 +184,13 @@ class Revora_Admin {
 			$db = new Revora_DB();
 			$id = intval( $_POST['review_id'] );
 			$data = array(
-				'category_slug' => sanitize_text_field( $_POST['category_slug'] ),
-				'name'          => sanitize_text_field( $_POST['name'] ),
-				'email'         => sanitize_email( $_POST['email'] ),
-				'rating'        => intval( $_POST['rating'] ),
-				'title'         => sanitize_text_field( $_POST['title'] ),
-				'content'       => sanitize_textarea_field( $_POST['content'] ),
-				'status'        => sanitize_text_field( $_POST['status'] ),
+				'category_slug' => sanitize_text_field( wp_unslash( $_POST['category_slug'] ?? '' ) ),
+				'name'          => sanitize_text_field( wp_unslash( $_POST['name'] ?? '' ) ),
+				'email'         => sanitize_email( wp_unslash( $_POST['email'] ?? '' ) ),
+				'rating'        => intval( $_POST['rating'] ?? 0 ),
+				'title'         => sanitize_text_field( wp_unslash( $_POST['title'] ?? '' ) ),
+				'content'       => sanitize_textarea_field( wp_unslash( $_POST['content'] ?? '' ) ),
+				'status'        => sanitize_text_field( wp_unslash( $_POST['status'] ?? '' ) ),
 			);
 
 			$updated = $db->update_review( $id, $data );
@@ -194,14 +206,14 @@ class Revora_Admin {
 		// Handle Category Add
 		if ( isset( $_POST['revora_add_category'] ) && check_admin_referer( 'revora_add_cat_nonce', 'revora_cat_nonce' ) ) {
 			$db = new Revora_DB();
-			$name = sanitize_text_field( $_POST['cat_name'] );
-			$slug = ! empty( $_POST['cat_slug'] ) ? sanitize_title( $_POST['cat_slug'] ) : sanitize_title( $name );
+			$name = sanitize_text_field( wp_unslash( $_POST['cat_name'] ?? '' ) );
+			$slug = ! empty( $_POST['cat_slug'] ) ? sanitize_title( wp_unslash( $_POST['cat_slug'] ) ) : sanitize_title( $name );
 			
 			$data = array(
-				'parent_id'   => intval( $_POST['parent_id'] ),
+				'parent_id'   => intval( $_POST['parent_id'] ?? 0 ),
 				'name'        => $name,
 				'slug'        => $slug,
-				'description' => sanitize_textarea_field( $_POST['cat_description'] ),
+				'description' => sanitize_textarea_field( wp_unslash( $_POST['cat_description'] ?? '' ) ),
 			);
 
 			$inserted = $db->insert_category( $data );
@@ -216,9 +228,9 @@ class Revora_Admin {
 			$db = new Revora_DB();
 			$id = intval( $_POST['cat_id'] );
 			$data = array(
-				'name'        => sanitize_text_field( $_POST['cat_name'] ),
-				'slug'        => sanitize_title( $_POST['cat_slug'] ),
-				'description' => sanitize_textarea_field( $_POST['cat_description'] ),
+				'name'        => sanitize_text_field( wp_unslash( $_POST['cat_name'] ?? '' ) ),
+				'slug'        => sanitize_title( wp_unslash( $_POST['cat_slug'] ?? '' ) ),
+				'description' => sanitize_textarea_field( wp_unslash( $_POST['cat_description'] ?? '' ) ),
 			);
 
 			$updated = $db->update_category( $id, $data );
@@ -229,8 +241,8 @@ class Revora_Admin {
 		}
 
 		// Handle Category Delete (from list table)
-		if ( isset( $_GET['action'] ) && 'delete_cat' === $_GET['action'] && isset( $_GET['cat_id'] ) ) {
-			// In a real plugin, we'd check nonces here too.
+		if ( isset( $_GET['action'] ) && 'delete_cat' === sanitize_key( $_GET['action'] ) && isset( $_GET['cat_id'] ) ) {
+			check_admin_referer( 'revora_delete_cat_' . intval( $_GET['cat_id'] ) );
 			$db = new Revora_DB();
 			$db->delete_category( intval( $_GET['cat_id'] ) );
 			wp_redirect( admin_url( 'admin.php?page=revora-categories&message=deleted' ) );
@@ -238,7 +250,8 @@ class Revora_Admin {
 		}
 
 		// Handle Review Duplicate
-		if ( isset( $_GET['action'] ) && 'duplicate' === $_GET['action'] && isset( $_GET['review_id'] ) ) {
+		if ( isset( $_GET['action'] ) && 'duplicate' === sanitize_key( $_GET['action'] ) && isset( $_GET['review_id'] ) ) {
+			check_admin_referer( 'revora_duplicate_' . intval( $_GET['review_id'] ) );
 			$db = new Revora_DB();
 			$db->duplicate_review( intval( $_GET['review_id'] ) );
 			wp_redirect( admin_url( 'admin.php?page=revora&message=duplicated' ) );
@@ -248,22 +261,25 @@ class Revora_Admin {
 		// Handle Review Actions (Approve/Reject/Delete)
 		if ( isset( $_GET['action'] ) && isset( $_GET['review_id'] ) ) {
 			$id     = intval( $_GET['review_id'] );
-			$action = $_GET['action'];
+			$action = sanitize_key( $_GET['action'] );
 			$db     = new Revora_DB();
 
 			if ( 'approve' === $action ) {
+				check_admin_referer( 'revora_approve_' . $id );
 				$db->update_review( $id, array( 'status' => 'approved' ) );
 				wp_redirect( admin_url( 'admin.php?page=revora&message=approved' ) );
 				exit;
 			}
 
 			if ( 'reject' === $action ) {
+				check_admin_referer( 'revora_reject_' . $id );
 				$db->update_review( $id, array( 'status' => 'rejected' ) );
 				wp_redirect( admin_url( 'admin.php?page=revora&message=rejected' ) );
 				exit;
 			}
 
 			if ( 'delete' === $action ) {
+				check_admin_referer( 'revora_delete_' . $id );
 				$db->delete_review( $id );
 				wp_redirect( admin_url( 'admin.php?page=revora&message=deleted' ) );
 				exit;
@@ -368,14 +384,14 @@ class Revora_Admin {
 
 		?>
 		<div class="wrap">
-			<h1 class="wp-heading-inline"><?php _e( 'Revora Reviews', 'revora' ); ?></h1>
-			<a href="<?php echo admin_url( 'admin.php?page=revora&action=add' ); ?>" class="page-title-action"><?php _e( 'Add New', 'revora' ); ?></a>
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'Revora Reviews', 'revora' ); ?></h1>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=revora&action=add' ) ); ?>" class="page-title-action"><?php esc_html_e( 'Add New', 'revora' ); ?></a>
 			<hr class="wp-header-end">
 
-			<?php echo $message; ?>
+			<?php echo wp_kses_post( $message ); ?>
 
 			<form id="revora-reviews-filter" method="get">
-				<input type="hidden" name="page" value="<?php echo esc_attr( $_REQUEST['page'] ); ?>" />
+				<input type="hidden" name="page" value="<?php echo esc_attr( sanitize_text_field( wp_unslash( $_REQUEST['page'] ?? '' ) ) ); ?>" />
 				<?php
 				$table->views();
 				$table->search_box( __( 'Search Reviews', 'revora' ), 'revora-search' );
@@ -384,41 +400,10 @@ class Revora_Admin {
 			</form>
 		</div>
 
-		<!-- Quick Edit Template -->
-		<script type="text/template" id="revora-quick-edit-template">
-			<tr class="revora-quick-row" id="revora-quick-edit-{{id}}">
-				<td colspan="6">
-					<form class="revora-quick-edit-form">
-						<input type="hidden" name="review_id" value="{{id}}">
-						
-						<div class="revora-field-group">
-							<label class="revora-field-label"><?php _e( 'Status', 'revora' ); ?></label>
-							<select name="status">
-								<option value="pending" {{status_pending}}><?php _e( 'Pending', 'revora' ); ?></option>
-								<option value="approved" {{status_approved}}><?php _e( 'Approved', 'revora' ); ?></option>
-								<option value="rejected" {{status_rejected}}><?php _e( 'Rejected', 'revora' ); ?></option>
-							</select>
-						</div>
-
-						<div class="revora-field-group">
-							<label class="revora-field-label"><?php _e( 'Rating', 'revora' ); ?></label>
-							<div class="revora-rating-selector" data-initial="{{rating}}">
-								<?php for ( $i = 1; $i <= 5; $i++ ) : ?>
-									<span class="dashicons dashicons-star-filled" data-rating="<?php echo $i; ?>"></span>
-								<?php endfor; ?>
-							</div>
-							<input type="hidden" name="rating" value="{{rating}}">
-						</div>
-
-						<div class="revora-quick-actions">
-							<button type="button" class="button button-primary revora-quick-save"><?php _e( 'Update', 'revora' ); ?></button>
-							<button type="button" class="button revora-quick-cancel"><?php _e( 'Cancel', 'revora' ); ?></button>
-						</div>
-					</form>
-				</td>
-			</tr>
-		</script>
 		<?php
+		// Quick edit template is output via JS (see revora-admin.js)
+		$quick_edit_template = '<tr class="revora-quick-row" id="revora-quick-edit-{{id}}"><td colspan="6"><form class="revora-quick-edit-form"><input type="hidden" name="review_id" value="{{id}}"><div class="revora-field-group"><label class="revora-field-label">' . esc_html__( 'Status', 'revora' ) . '</label><select name="status"><option value="pending" {{status_pending}}>' . esc_html__( 'Pending', 'revora' ) . '</option><option value="approved" {{status_approved}}>' . esc_html__( 'Approved', 'revora' ) . '</option><option value="rejected" {{status_rejected}}>' . esc_html__( 'Rejected', 'revora' ) . '</option></select></div><div class="revora-field-group"><label class="revora-field-label">' . esc_html__( 'Rating', 'revora' ) . '</label><div class="revora-rating-selector" data-initial="{{rating}}"><span class="dashicons dashicons-star-filled" data-rating="1"></span><span class="dashicons dashicons-star-filled" data-rating="2"></span><span class="dashicons dashicons-star-filled" data-rating="3"></span><span class="dashicons dashicons-star-filled" data-rating="4"></span><span class="dashicons dashicons-star-filled" data-rating="5"></span></div><input type="hidden" name="rating" value="{{rating}}"></div><div class="revora-quick-actions"><button type="button" class="button button-primary revora-quick-save">' . esc_html__( 'Update', 'revora' ) . '</button><button type="button" class="button revora-quick-cancel">' . esc_html__( 'Cancel', 'revora' ) . '</button></div></form></td></tr>';
+		wp_add_inline_script( 'revora-admin', 'var revoraQuickEditTemplate = ' . wp_json_encode( $quick_edit_template ) . ';', 'before' );
 	}
 
 	/**
@@ -429,7 +414,7 @@ class Revora_Admin {
 		$categories = $db->get_categories();
 		?>
 		<div class="wrap">
-			<h1 class="wp-heading-inline"><?php _e( 'Add New Review', 'revora' ); ?></h1>
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'Add New Review', 'revora' ); ?></h1>
 			<hr class="wp-header-end">
 
 			<form method="post" action="" class="revora-form-container">
@@ -438,15 +423,15 @@ class Revora_Admin {
 				<div class="revora-form-main">
 					<div class="revora-card">
 						<div class="revora-card-header">
-							<span class="dashicons dashicons-admin-users"></span> <?php _e( 'Author Details', 'revora' ); ?>
+							<span class="dashicons dashicons-admin-users"></span> <?php esc_html_e( 'Author Details', 'revora' ); ?>
 						</div>
 						<div class="revora-card-body">
 							<div class="revora-field-group">
-								<label class="revora-field-label" for="name"><?php _e( 'Name', 'revora' ); ?></label>
+								<label class="revora-field-label" for="name"><?php esc_html_e( 'Name', 'revora' ); ?></label>
 								<input name="name" type="text" id="name" value="" placeholder="John Doe" required>
 							</div>
 							<div class="revora-field-group">
-								<label class="revora-field-label" for="email"><?php _e( 'Email', 'revora' ); ?></label>
+								<label class="revora-field-label" for="email"><?php esc_html_e( 'Email', 'revora' ); ?></label>
 								<input name="email" type="email" id="email" value="" placeholder="john@example.com" required>
 							</div>
 						</div>
@@ -454,15 +439,15 @@ class Revora_Admin {
 
 					<div class="revora-card">
 						<div class="revora-card-header">
-							<span class="dashicons dashicons-editor-quote"></span> <?php _e( 'Review Content', 'revora' ); ?>
+							<span class="dashicons dashicons-editor-quote"></span> <?php esc_html_e( 'Review Content', 'revora' ); ?>
 						</div>
 						<div class="revora-card-body">
 							<div class="revora-field-group">
-								<label class="revora-field-label" for="title"><?php _e( 'Review Title', 'revora' ); ?></label>
+								<label class="revora-field-label" for="title"><?php esc_html_e( 'Review Title', 'revora' ); ?></label>
 								<input name="title" type="text" id="title" value="" placeholder="e.g. Amazing Service!" required>
 							</div>
 							<div class="revora-field-group">
-								<label class="revora-field-label" for="content"><?php _e( 'Review Content', 'revora' ); ?></label>
+								<label class="revora-field-label" for="content"><?php esc_html_e( 'Review Content', 'revora' ); ?></label>
 								<textarea name="content" id="content" rows="12" placeholder="Write the review content here..." required></textarea>
 							</div>
 						</div>
@@ -472,21 +457,21 @@ class Revora_Admin {
 				<div class="revora-form-sidebar">
 					<div class="revora-card">
 						<div class="revora-card-header">
-							<span class="dashicons dashicons-admin-settings"></span> <?php _e( 'Review Settings', 'revora' ); ?>
+							<span class="dashicons dashicons-admin-settings"></span> <?php esc_html_e( 'Review Settings', 'revora' ); ?>
 						</div>
 						<div class="revora-card-body">
 							<div class="revora-field-group">
-								<label class="revora-field-label"><?php _e( 'Categories', 'revora' ); ?></label>
+								<label class="revora-field-label"><?php esc_html_e( 'Categories', 'revora' ); ?></label>
 								<div class="revora-category-checklist">
 									<?php $this->render_category_checklist(); ?>
 								</div>
 							</div>
 
 							<div class="revora-field-group">
-								<label class="revora-field-label"><?php _e( 'Rating', 'revora' ); ?></label>
+								<label class="revora-field-label"><?php esc_html_e( 'Rating', 'revora' ); ?></label>
 								<div class="revora-rating-selector">
 									<?php for ( $i = 1; $i <= 5; $i++ ) : ?>
-										<span class="dashicons dashicons-star-filled active" data-rating="<?php echo $i; ?>"></span>
+										<span class="dashicons dashicons-star-filled active" data-rating="<?php echo absint( $i ); ?>"></span>
 									<?php endfor; ?>
 								</div>
 								<input type="hidden" name="rating" id="rating_input" value="5">
@@ -512,14 +497,14 @@ class Revora_Admin {
 		$categories = $db->get_categories();
 
 		if ( ! $review ) {
-			echo '<div class="error"><p>' . __( 'Review not found.', 'revora' ) . '</p></div>';
+			echo '<div class="error"><p>' . esc_html__( 'Review not found.', 'revora' ) . '</p></div>';
 			return;
 		}
 
 		?>
 		<div class="wrap">
-			<h1 class="wp-heading-inline"><?php _e( 'Edit Review', 'revora' ); ?></h1>
-			<a href="<?php echo admin_url( 'admin.php?page=revora&action=add' ); ?>" class="page-title-action"><?php _e( 'Add New', 'revora' ); ?></a>
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'Edit Review', 'revora' ); ?></h1>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=revora&action=add' ) ); ?>" class="page-title-action"><?php esc_html_e( 'Add New', 'revora' ); ?></a>
 			<hr class="wp-header-end">
 
 			<form method="post" action="" class="revora-form-container">
@@ -529,15 +514,15 @@ class Revora_Admin {
 				<div class="revora-form-main">
 					<div class="revora-card">
 						<div class="revora-card-header">
-							<span class="dashicons dashicons-admin-users"></span> <?php _e( 'Author Details', 'revora' ); ?>
+							<span class="dashicons dashicons-admin-users"></span> <?php esc_html_e( 'Author Details', 'revora' ); ?>
 						</div>
 						<div class="revora-card-body">
 							<div class="revora-field-group">
-								<label class="revora-field-label" for="name"><?php _e( 'Name', 'revora' ); ?></label>
+								<label class="revora-field-label" for="name"><?php esc_html_e( 'Name', 'revora' ); ?></label>
 								<input name="name" type="text" id="name" value="<?php echo esc_attr( $review->name ); ?>" required>
 							</div>
 							<div class="revora-field-group">
-								<label class="revora-field-label" for="email"><?php _e( 'Email', 'revora' ); ?></label>
+								<label class="revora-field-label" for="email"><?php esc_html_e( 'Email', 'revora' ); ?></label>
 								<input name="email" type="email" id="email" value="<?php echo esc_attr( $review->email ); ?>" required>
 							</div>
 						</div>
@@ -545,15 +530,15 @@ class Revora_Admin {
 
 					<div class="revora-card">
 						<div class="revora-card-header">
-							<span class="dashicons dashicons-editor-quote"></span> <?php _e( 'Review Content', 'revora' ); ?>
+							<span class="dashicons dashicons-editor-quote"></span> <?php esc_html_e( 'Review Content', 'revora' ); ?>
 						</div>
 						<div class="revora-card-body">
 							<div class="revora-field-group">
-								<label class="revora-field-label" for="title"><?php _e( 'Review Title', 'revora' ); ?></label>
+								<label class="revora-field-label" for="title"><?php esc_html_e( 'Review Title', 'revora' ); ?></label>
 								<input name="title" type="text" id="title" value="<?php echo esc_attr( $review->title ); ?>" required>
 							</div>
 							<div class="revora-field-group">
-								<label class="revora-field-label" for="content"><?php _e( 'Review Content', 'revora' ); ?></label>
+								<label class="revora-field-label" for="content"><?php esc_html_e( 'Review Content', 'revora' ); ?></label>
 								<textarea name="content" id="content" rows="12" required><?php echo esc_textarea( $review->content ); ?></textarea>
 							</div>
 						</div>
@@ -563,20 +548,20 @@ class Revora_Admin {
 				<div class="revora-form-sidebar">
 					<div class="revora-card">
 						<div class="revora-card-header">
-							<span class="dashicons dashicons-admin-settings"></span> <?php _e( 'Review Settings', 'revora' ); ?>
+							<span class="dashicons dashicons-admin-settings"></span> <?php esc_html_e( 'Review Settings', 'revora' ); ?>
 						</div>
 						<div class="revora-card-body">
 							<div class="revora-field-group">
-								<label class="revora-field-label" for="status"><?php _e( 'Status', 'revora' ); ?></label>
+								<label class="revora-field-label" for="status"><?php esc_html_e( 'Status', 'revora' ); ?></label>
 								<select name="status" id="status">
-									<option value="pending" <?php selected( $review->status, 'pending' ); ?>><?php _e( 'Pending', 'revora' ); ?></option>
-									<option value="approved" <?php selected( $review->status, 'approved' ); ?>><?php _e( 'Approved', 'revora' ); ?></option>
-									<option value="rejected" <?php selected( $review->status, 'rejected' ); ?>><?php _e( 'Rejected', 'revora' ); ?></option>
+									<option value="pending" <?php selected( $review->status, 'pending' ); ?>><?php esc_html_e( 'Pending', 'revora' ); ?></option>
+									<option value="approved" <?php selected( $review->status, 'approved' ); ?>><?php esc_html_e( 'Approved', 'revora' ); ?></option>
+									<option value="rejected" <?php selected( $review->status, 'rejected' ); ?>><?php esc_html_e( 'Rejected', 'revora' ); ?></option>
 								</select>
 							</div>
 
 							<div class="revora-field-group">
-								<label class="revora-field-label"><?php _e( 'Categories', 'revora' ); ?></label>
+								<label class="revora-field-label"><?php esc_html_e( 'Categories', 'revora' ); ?></label>
 								<div class="revora-category-checklist">
 									<?php 
 									$selected_cats = $db->get_review_categories( $review->id );
@@ -586,7 +571,7 @@ class Revora_Admin {
 							</div>
 
 							<div class="revora-field-group">
-								<label class="revora-field-label"><?php _e( 'Rating', 'revora' ); ?></label>
+								<label class="revora-field-label"><?php esc_html_e( 'Rating', 'revora' ); ?></label>
 								<div class="revora-rating-selector">
 									<?php for ( $i = 1; $i <= 5; $i++ ) : ?>
 										<?php $active_class = ( intval( $review->rating ) >= $i ) ? 'active' : ''; ?>
@@ -634,25 +619,25 @@ class Revora_Admin {
 
 		?>
 		<div class="wrap">
-			<h1><?php _e( 'Categories', 'revora' ); ?></h1>
-			<?php echo $message; ?>
+			<h1><?php esc_html_e( 'Categories', 'revora' ); ?></h1>
+			<?php echo wp_kses_post( $message ); ?>
 
 			<div id="col-container" class="wp-clearfix">
 				<div id="col-left">
 					<div class="col-wrap">
 						<div class="form-wrap">
-							<h2><?php _e( 'Add New Category', 'revora' ); ?></h2>
+							<h2><?php esc_html_e( 'Add New Category', 'revora' ); ?></h2>
 							<form id="addtag" method="post" action="" class="validate">
 								<?php wp_nonce_field( 'revora_add_cat_nonce', 'revora_cat_nonce' ); ?>
 								<div class="form-field form-required term-name-wrap">
-									<label for="cat_name"><?php _e( 'Name', 'revora' ); ?></label>
+									<label for="cat_name"><?php esc_html_e( 'Name', 'revora' ); ?></label>
 									<input name="cat_name" id="cat_name" type="text" value="" size="40" aria-required="true" required>
-									<p><?php _e( 'The name is how it appears on your site.', 'revora' ); ?></p>
+									<p><?php esc_html_e( 'The name is how it appears on your site.', 'revora' ); ?></p>
 								</div>
 								<div class="form-field term-parent-wrap">
-									<label for="parent_id"><?php _e( 'Parent Category', 'revora' ); ?></label>
+									<label for="parent_id"><?php esc_html_e( 'Parent Category', 'revora' ); ?></label>
 									<select name="parent_id" id="parent_id">
-										<option value="0"><?php _e( 'None', 'revora' ); ?></option>
+										<option value="0"><?php esc_html_e( 'None', 'revora' ); ?></option>
 										<?php
 										$db = new Revora_DB();
 										$categories = $db->get_categories();
@@ -663,7 +648,7 @@ class Revora_Admin {
 										}
 										?>
 									</select>
-									<p><?php _e( 'Categories, unlike tags, can have a hierarchy. You might have a Jazz category, and under that have children categories for Bebop and Big Band. Totally optional.', 'revora' ); ?></p>
+									<p><?php esc_html_e( 'Categories, unlike tags, can have a hierarchy. You might have a Jazz category, and under that have children categories for Bebop and Big Band. Totally optional.', 'revora' ); ?></p>
 								</div>
 								<input type="hidden" name="revora_add_category" value="1">
 								<?php submit_button( __( 'Add New Category', 'revora' ) ); ?>
@@ -719,30 +704,30 @@ class Revora_Admin {
 		$cat = $db->get_category( $id );
 
 		if ( ! $cat ) {
-			echo '<div class="error"><p>' . __( 'Category not found.', 'revora' ) . '</p></div>';
+			echo '<div class="error"><p>' . esc_html__( 'Category not found.', 'revora' ) . '</p></div>';
 			return;
 		}
 
 		?>
 		<div class="wrap">
-			<h1><?php _e( 'Edit Category', 'revora' ); ?></h1>
+			<h1><?php esc_html_e( 'Edit Category', 'revora' ); ?></h1>
 			<form method="post" action="">
 				<?php wp_nonce_field( 'revora_add_cat_nonce', 'revora_cat_nonce' ); ?>
 				<input type="hidden" name="cat_id" value="<?php echo esc_attr( $cat->id ); ?>">
 				<table class="form-table">
 					<tr>
-						<th scope="row"><label for="cat_name"><?php _e( 'Name', 'revora' ); ?></label></th>
+						<th scope="row"><label for="cat_name"><?php esc_html_e( 'Name', 'revora' ); ?></label></th>
 						<td><input name="cat_name" type="text" id="cat_name" value="<?php echo esc_attr( $cat->name ); ?>" class="regular-text" required></td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="cat_slug"><?php _e( 'Slug', 'revora' ); ?></label></th>
+						<th scope="row"><label for="cat_slug"><?php esc_html_e( 'Slug', 'revora' ); ?></label></th>
 						<td><input name="cat_slug" type="text" id="cat_slug" value="<?php echo esc_attr( $cat->slug ); ?>" class="regular-text" required></td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="parent_id"><?php _e( 'Parent Category', 'revora' ); ?></label></th>
+						<th scope="row"><label for="parent_id"><?php esc_html_e( 'Parent Category', 'revora' ); ?></label></th>
 						<td>
 							<select name="parent_id" id="parent_id">
-								<option value="0"><?php _e( 'None', 'revora' ); ?></option>
+								<option value="0"><?php esc_html_e( 'None', 'revora' ); ?></option>
 								<?php
 								$all_cats = $db->get_categories();
 								foreach ( $all_cats as $other_cat ) {
@@ -756,7 +741,7 @@ class Revora_Admin {
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="cat_description"><?php _e( 'Description', 'revora' ); ?></label></th>
+						<th scope="row"><label for="cat_description"><?php esc_html_e( 'Description', 'revora' ); ?></label></th>
 						<td><textarea name="cat_description" id="cat_description" rows="5" cols="50" class="large-text"><?php echo esc_textarea( $cat->description ); ?></textarea></td>
 					</tr>
 				</table>
@@ -781,14 +766,14 @@ class Revora_Admin {
 		);
 		?>
 		<div class="wrap revora-settings-wrap">
-			<h1><?php _e( 'Revora Settings', 'revora' ); ?></h1>
+			<h1><?php esc_html_e( 'Revora Settings', 'revora' ); ?></h1>
 			
 			<div class="revora-settings-container">
 				<nav class="revora-settings-tabs">
 					<?php foreach ( $tabs as $id => $tab ) : ?>
-						<a href="?page=revora-settings&tab=<?php echo $id; ?>" class="revora-tab-link <?php echo $active_tab === $id ? 'active' : ''; ?>">
-							<span class="dashicons dashicons-<?php echo $tab['icon']; ?>"></span>
-							<?php echo $tab['label']; ?>
+						<a href="<?php echo esc_url( add_query_arg( 'tab', $id, admin_url( 'admin.php?page=revora-settings' ) ) ); ?>" class="revora-tab-link <?php echo esc_attr( $active_tab === $id ? 'active' : '' ); ?>">
+							<span class="dashicons dashicons-<?php echo esc_attr( $tab['icon'] ); ?>"></span>
+							<?php echo esc_html( $tab['label'] ); ?>
 						</a>
 					<?php endforeach; ?>
 				</nav>
@@ -801,18 +786,18 @@ class Revora_Admin {
 					<div class="revora-settings-content">
 						<?php if ( 'moderation' === $active_tab ) : ?>
 							<div class="revora-card">
-								<div class="revora-card-header"><?php _e( 'Moderation Settings', 'revora' ); ?></div>
+								<div class="revora-card-header"><?php esc_html_e( 'Moderation Settings', 'revora' ); ?></div>
 								<div class="revora-card-body">
 									<div class="revora-field-group">
-										<label class="revora-field-label"><?php _e( 'Approval Flow', 'revora' ); ?></label>
+										<label class="revora-field-label"><?php esc_html_e( 'Approval Flow', 'revora' ); ?></label>
 										<label>
 											<input type="checkbox" name="revora_settings[auto_approve]" value="1" <?php checked( $settings['auto_approve'], '1' ); ?>>
-											<?php _e( 'Auto-approve new reviews', 'revora' ); ?>
+											<?php esc_html_e( 'Auto-approve new reviews', 'revora' ); ?>
 										</label>
-										<p class="description"><?php _e( 'If enabled, reviews will be published instantly without manual approval.', 'revora' ); ?></p>
+										<p class="description"><?php esc_html_e( 'If enabled, reviews will be published instantly without manual approval.', 'revora' ); ?></p>
 									</div>
 									<div class="revora-field-group">
-										<label class="revora-field-label" for="revora_admin_email"><?php _e( 'Admin Notification Email', 'revora' ); ?></label>
+										<label class="revora-field-label" for="revora_admin_email"><?php esc_html_e( 'Admin Notification Email', 'revora' ); ?></label>
 										<input type="email" name="revora_settings[admin_email]" id="revora_admin_email" value="<?php echo esc_attr( $settings['admin_email'] ); ?>" class="regular-text" />
 									</div>
 								</div>
@@ -820,17 +805,17 @@ class Revora_Admin {
 
 						<?php elseif ( 'emails' === $active_tab ) : ?>
 							<div class="revora-card">
-								<div class="revora-card-header"><?php _e( 'Admin Notification Template', 'revora' ); ?></div>
+								<div class="revora-card-header"><?php esc_html_e( 'Admin Notification Template', 'revora' ); ?></div>
 								<div class="revora-card-body">
 									<div class="revora-field-group">
-										<label class="revora-field-label"><?php _e( 'Email Subject', 'revora' ); ?></label>
+										<label class="revora-field-label"><?php esc_html_e( 'Email Subject', 'revora' ); ?></label>
 										<input type="text" name="revora_settings[email_subject]" value="<?php echo esc_attr( $settings['email_subject'] ); ?>" class="regular-text">
 									</div>
 									<div class="revora-field-group">
-										<label class="revora-field-label"><?php _e( 'Email Template', 'revora' ); ?></label>
+										<label class="revora-field-label"><?php esc_html_e( 'Email Template', 'revora' ); ?></label>
 										<textarea name="revora_settings[email_template]" rows="10" class="large-text"><?php echo esc_textarea( $settings['email_template'] ); ?></textarea>
 										<p class="description">
-											<?php _e( 'Available tags:', 'revora' ); ?> <code>{author}</code>, <code>{rating}</code>, <code>{content}</code>, <code>{admin_url}</code>
+											<?php esc_html_e( 'Available tags:', 'revora' ); ?> <code>{author}</code>, <code>{rating}</code>, <code>{content}</code>, <code>{admin_url}</code>
 										</p>
 									</div>
 								</div>
@@ -838,18 +823,18 @@ class Revora_Admin {
 
 						<?php elseif ( 'shortcodes' === $active_tab ) : ?>
 							<div class="revora-card">
-								<div class="revora-card-header"><?php _e( 'Shortcode Documentation', 'revora' ); ?></div>
+								<div class="revora-card-header"><?php esc_html_e( 'Shortcode Documentation', 'revora' ); ?></div>
 								<div class="revora-card-body">
 									<div class="revora-shortcode-info">
-										<h3><?php _e( 'Display Reviews', 'revora' ); ?></h3>
-										<p><?php _e( 'Use this shortcode to display approved reviews on any post or page.', 'revora' ); ?></p>
+										<h3><?php esc_html_e( 'Display Reviews', 'revora' ); ?></h3>
+										<p><?php esc_html_e( 'Use this shortcode to display approved reviews on any post or page.', 'revora' ); ?></p>
 										<code>[revora_reviews category="category-slug"]</code>
-										<p class="description"><?php _e( 'The "category" attribute is optional. Omit it to show all reviews.', 'revora' ); ?></p>
+										<p class="description"><?php esc_html_e( 'The "category" attribute is optional. Omit it to show all reviews.', 'revora' ); ?></p>
 									</div>
 									<hr>
 									<div class="revora-shortcode-info">
-										<h3><?php _e( 'Review Submission Form', 'revora' ); ?></h3>
-										<p><?php _e( 'Use this shortcode to display the review submission form.', 'revora' ); ?></p>
+										<h3><?php esc_html_e( 'Review Submission Form', 'revora' ); ?></h3>
+										<p><?php esc_html_e( 'Use this shortcode to display the review submission form.', 'revora' ); ?></p>
 										<code>[revora_form]</code>
 									</div>
 								</div>
@@ -884,24 +869,24 @@ class Revora_Admin {
 			<div class="revora-stats-overview">
 				<div class="revora-stat-box revora-box-total">
 					<div class="revora-stat-number"><?php echo number_format_i18n( $stats->total ); ?></div>
-					<div class="revora-stat-text"><?php _e( 'Total Reviews', 'revora' ); ?></div>
+					<div class="revora-stat-text"><?php esc_html_e( 'Total Reviews', 'revora' ); ?></div>
 				</div>
 				<div class="revora-stat-box revora-box-approved">
 					<div class="revora-stat-number"><?php echo number_format_i18n( $stats->approved ); ?></div>
-					<div class="revora-stat-text"><?php _e( 'Approved', 'revora' ); ?></div>
+					<div class="revora-stat-text"><?php esc_html_e( 'Approved', 'revora' ); ?></div>
 				</div>
 				<div class="revora-stat-box revora-box-pending <?php echo $stats->pending > 0 ? 'alert' : ''; ?>">
 					<div class="revora-stat-number"><?php echo number_format_i18n( $stats->pending ); ?></div>
-					<div class="revora-stat-text"><?php _e( 'Pending', 'revora' ); ?></div>
+					<div class="revora-stat-text"><?php esc_html_e( 'Pending', 'revora' ); ?></div>
 				</div>
 				<div class="revora-stat-box revora-box-rating">
 					<div class="revora-stat-number"><?php echo number_format( $stats->average, 1 ); ?><span class="revora-rating-scale">/5</span></div>
-					<div class="revora-stat-text"><?php _e( 'Avg Rating', 'revora' ); ?></div>
+					<div class="revora-stat-text"><?php esc_html_e( 'Avg Rating', 'revora' ); ?></div>
 				</div>
 			</div>
 			<div class="revora-widget-links">
-				<a href="<?php echo admin_url( 'admin.php?page=revora' ); ?>" class="revora-link-primary">
-					<?php _e( 'View All Reviews', 'revora' ); ?> →
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=revora' ) ); ?>" class="revora-link-primary">
+					<?php esc_html_e( 'View All Reviews', 'revora' ); ?> →
 				</a>
 			</div>
 		</div>
@@ -957,7 +942,7 @@ class Revora_Review_List_Table extends WP_List_Table {
 		$actions = array(
 			'edit'       => sprintf( '<a href="?page=%s&action=%s&review_id=%s">%s</a>', 'revora', 'edit', $item->id, __( 'Edit', 'revora' ) ),
 			'quick_edit' => sprintf( '<a href="#" class="revora-quick-edit-trigger" data-id="%s">%s</a>', $item->id, __( 'Quick Edit', 'revora' ) ),
-			'duplicate'  => sprintf( '<a href="?page=%s&action=%s&review_id=%s">%s</a>', 'revora', 'duplicate', $item->id, __( 'Duplicate', 'revora' ) ),
+			'duplicate'  => sprintf( '<a href="%s">%s</a>', wp_nonce_url( add_query_arg( array( 'page' => 'revora', 'action' => 'duplicate', 'review_id' => $item->id ) ), 'revora_duplicate_' . $item->id ), esc_html__( 'Duplicate', 'revora' ) ),
 			'delete'     => sprintf( '<a href="?page=%s&action=%s&review_id=%s" onclick="return confirm(\'Are you sure?\')">%s</a>', 'revora', 'delete', $item->id, __( 'Delete', 'revora' ) ),
 		);
 
@@ -1027,20 +1012,20 @@ class Revora_Review_List_Table extends WP_List_Table {
 		$current_page = $this->get_pagenum();
 
 		// Search
-		$search = ( ! empty( $_REQUEST['s'] ) ) ? sanitize_text_field( $_REQUEST['s'] ) : '';
+		$search = ( ! empty( $_REQUEST['s'] ) ) ? sanitize_text_field( wp_unslash( $_REQUEST['s'] ) ) : '';
 		
 		// Status filter
-		$status = ( ! empty( $_REQUEST['status'] ) && 'all' !== $_REQUEST['status'] ) ? sanitize_text_field( $_REQUEST['status'] ) : '';
+		$status = ( ! empty( $_REQUEST['status'] ) && 'all' !== $_REQUEST['status'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['status'] ) ) : '';
 
 		// Whitelist sorting
 		$sortable = $this->get_sortable_columns();
-		if ( ! empty( $_GET['orderby'] ) && array_key_exists( $_GET['orderby'], $sortable ) ) {
-			$orderby = $_GET['orderby'];
+		if ( ! empty( $_GET['orderby'] ) && array_key_exists( sanitize_key( $_GET['orderby'] ), $sortable ) ) {
+			$orderby = sanitize_key( $_GET['orderby'] );
 		} else {
 			$orderby = 'created_at';
 		}
 
-		$order = ( ! empty( $_GET['order'] ) && strtolower( $_GET['order'] ) === 'asc' ) ? 'ASC' : 'DESC';
+		$order = ( ! empty( $_GET['order'] ) && strtolower( sanitize_key( $_GET['order'] ) ) === 'asc' ) ? 'ASC' : 'DESC';
 
 		// Set column headers (CRITICAL for rendering)
 		$this->_column_headers = array( $this->get_columns(), array(), $sortable );
@@ -1209,8 +1194,8 @@ class Revora_Category_List_Table extends WP_List_Table {
 add_action( 'wp_ajax_revora_submit_deactivation_feedback', function() {
 	check_ajax_referer( 'revora_deactivation_nonce', 'nonce' );
 	
-	$reason  = sanitize_text_field( $_POST['reason'] );
-	$details = sanitize_textarea_field( $_POST['details'] );
+	$reason  = sanitize_text_field( wp_unslash( $_POST['reason'] ?? '' ) );
+	$details = sanitize_textarea_field( wp_unslash( $_POST['details'] ?? '' ) );
 	$email   = get_option( 'admin_email' );
 
 	// For now, we'll just send an email to the admin with the feedback
@@ -1234,9 +1219,9 @@ add_action( 'admin_footer', function() {
 			<div class="revora-modal-header">
 				<div class="revora-modal-logo">
 					<span class="dashicons dashicons-star-filled"></span>
-					<h2><?php _e( 'We\'re sorry to see you go', 'revora' ); ?></h2>
+					<h2><?php esc_html_e( 'We\'re sorry to see you go', 'revora' ); ?></h2>
 				</div>
-				<p><?php _e( 'If you have a moment, please let us know why you are deactivating Revora. Your feedback helps us improve.', 'revora' ); ?></p>
+				<p><?php esc_html_e( 'If you have a moment, please let us know why you are deactivating Revora. Your feedback helps us improve.', 'revora' ); ?></p>
 			</div>
 			<div class="revora-modal-body">
 				<form id="revora-deactivation-form">
@@ -1260,14 +1245,14 @@ add_action( 'admin_footer', function() {
 						<?php endforeach; ?>
 					</ul>
 					<div class="revora-other-reason" style="display:none;">
-						<textarea name="details" placeholder="<?php _e( 'Please share more details...', 'revora' ); ?>" rows="3"></textarea>
+						<textarea name="details" placeholder="<?php esc_html_e( 'Please share more details...', 'revora' ); ?>" rows="3"></textarea>
 					</div>
 				</form>
 			</div>
 			<div class="revora-modal-footer">
-				<button type="button" class="revora-modal-skip" id="revora-deactivate-skip"><?php _e( 'Skip & Deactivate', 'revora' ); ?></button>
+				<button type="button" class="revora-modal-skip" id="revora-deactivate-skip"><?php esc_html_e( 'Skip & Deactivate', 'revora' ); ?></button>
 				<button type="submit" form="revora-deactivation-form" class="revora-modal-submit" id="revora-deactivate-submit">
-					<span class="revora-btn-text"><?php _e( 'Submit & Deactivate', 'revora' ); ?></span>
+					<span class="revora-btn-text"><?php esc_html_e( 'Submit & Deactivate', 'revora' ); ?></span>
 					<span class="revora-spinner" style="display:none;"></span>
 				</button>
 			</div>

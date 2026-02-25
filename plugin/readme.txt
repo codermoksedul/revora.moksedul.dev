@@ -95,7 +95,7 @@ Go to **Revora > All Reviews** in your WordPress admin panel. You can approve, r
 
 = Can I customize the review form? =
 
-Yes! You can customize colors, typography, spacing, and more through the Elementor widget controls or via custom CSS in the settings.
+Yes! You can customize colors, typography, spacing, and more through the Elementor widget controls or via the WordPress Customizer (Appearance → Customize → Additional CSS).
 
 = Is the plugin GDPR compliant? =
 
@@ -181,7 +181,7 @@ Revora does not send data to any third-party services or external APIs.
 == Support ==
 
 For support, feature requests, or bug reports, please visit:
-https://github.com/codermoksedul/revora
+https://wordpress.org/support/plugin/revora/
 
 == Credits ==
 

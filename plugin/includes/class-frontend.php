@@ -40,11 +40,11 @@ class Revora_Frontend {
 			<?php if ( $stats && $stats->total > 0 ) : ?>
 				<div class="revora-summary">
 					<div class="revora-average">
-						<span class="revora-average-number"><?php echo number_format( $stats->average, 1 ); ?></span>
+						<span class="revora-average-number"><?php echo esc_html( number_format( $stats->average, 1 ) ); ?></span>
 						<div class="revora-stars-display">
-							<?php echo $this->render_stars( $stats->average ); ?>
+							<?php echo wp_kses( $this->render_stars( $stats->average ), array( 'div' => array( 'class' => array() ), 'svg' => array( 'class' => array(), 'viewbox' => array() ), 'path' => array( 'd' => array() ) ) ); ?>
 						</div>
-						<span class="revora-total-count"><?php printf( _n( '%s review', '%s reviews', $stats->total, 'revora' ), number_format_i18n( $stats->total ) ); ?></span>
+						<span class="revora-total-count"><?php echo esc_html( sprintf( _n( '%s review', '%s reviews', $stats->total, 'revora' ), number_format_i18n( $stats->total ) ) ); ?></span>
 					</div>
 				</div>
 			<?php endif; ?>
@@ -55,13 +55,13 @@ class Revora_Frontend {
 						<div class="revora-review-card">
 							<div class="revora-review-header">
 								<div class="revora-review-stars">
-									<?php echo $this->render_stars( $review->rating ); ?>
+									<?php echo wp_kses( $this->render_stars( $review->rating ), array( 'div' => array( 'class' => array() ), 'svg' => array( 'class' => array(), 'viewbox' => array() ), 'path' => array( 'd' => array() ) ) ); ?>
 								</div>
 								<h3 class="revora-review-title"><?php echo esc_html( $review->title ); ?></h3>
 							</div>
 							<div class="revora-review-meta">
 								<span class="revora-review-author"><?php echo esc_html( $review->name ); ?></span>
-								<span class="revora-review-date"><?php echo date_i18n( get_option( 'date_format' ), strtotime( $review->created_at ) ); ?></span>
+								<span class="revora-review-date"><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $review->created_at ) ) ); ?></span>
 							</div>
 							<div class="revora-review-content">
 								<?php echo wpautop( esc_html( $review->content ) ); ?>
@@ -69,7 +69,7 @@ class Revora_Frontend {
 						</div>
 					<?php endforeach; ?>
 				<?php else : ?>
-					<p class="revora-no-reviews"><?php _e( 'No reviews yet for this category.', 'revora' ); ?></p>
+					<p class="revora-no-reviews"><?php esc_html_e( 'No reviews yet for this category.', 'revora' ); ?></p>
 				<?php endif; ?>
 			</div>
 		</div>
@@ -91,7 +91,7 @@ class Revora_Frontend {
 			<form id="revora-submission-form" class="revora-form">
 				<input type="hidden" name="action" value="revora_submit">
 				<input type="hidden" name="category_slug" value="<?php echo esc_attr( $atts['category'] ); ?>">
-				<input type="hidden" name="nonce" value="<?php echo wp_create_nonce( 'revora_submit_nonce' ); ?>">
+				<input type="hidden" name="nonce" value="<?php echo esc_attr( wp_create_nonce( 'revora_submit_nonce' ) ); ?>">
 				
 				<div class="revora-form-field honeypot-field" style="display:none !important;">
 					<input type="text" name="revora_honeypot" value="">
@@ -99,21 +99,21 @@ class Revora_Frontend {
 
 				<div class="revora-form-row">
 					<div class="revora-form-field">
-						<label for="revora-name"><?php _e( 'Name', 'revora' ); ?></label>
+						<label for="revora-name"><?php esc_html_e( 'Name', 'revora' ); ?></label>
 						<input type="text" id="revora-name" name="name" required>
 					</div>
 					<div class="revora-form-field">
-						<label for="revora-email"><?php _e( 'Email', 'revora' ); ?></label>
+						<label for="revora-email"><?php esc_html_e( 'Email', 'revora' ); ?></label>
 						<input type="email" id="revora-email" name="email" required>
 					</div>
 				</div>
 
 				<div class="revora-form-field">
-					<label><?php _e( 'Rating', 'revora' ); ?></label>
+					<label><?php esc_html_e( 'Rating', 'revora' ); ?></label>
 					<div class="revora-rating-input">
 						<?php for ( $i = 5; $i >= 1; $i-- ) : ?>
-							<input type="radio" id="star-<?php echo $i; ?>" name="rating" value="<?php echo $i; ?>" required />
-							<label for="star-<?php echo $i; ?>" title="<?php echo $i; ?> stars">
+							<input type="radio" id="star-<?php echo absint( $i ); ?>" name="rating" value="<?php echo absint( $i ); ?>" required />
+							<label for="star-<?php echo absint( $i ); ?>" title="<?php echo absint( $i ); ?> stars">
 								<svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
 							</label>
 						<?php endfor; ?>
@@ -121,18 +121,18 @@ class Revora_Frontend {
 				</div>
 
 				<div class="revora-form-field">
-					<label for="revora-title"><?php _e( 'Review Title', 'revora' ); ?></label>
+					<label for="revora-title"><?php esc_html_e( 'Review Title', 'revora' ); ?></label>
 					<input type="text" id="revora-title" name="title" required>
 				</div>
 
 				<div class="revora-form-field">
-					<label for="revora-content"><?php _e( 'Review Content', 'revora' ); ?></label>
+					<label for="revora-content"><?php esc_html_e( 'Review Content', 'revora' ); ?></label>
 					<textarea id="revora-content" name="content" rows="5" required minlength="25"></textarea>
 				</div>
 
 				<div class="revora-form-footer">
 					<button type="submit" class="revora-submit-btn">
-						<span class="btn-text"><?php _e( 'Submit Review', 'revora' ); ?></span>
+						<span class="btn-text"><?php esc_html_e( 'Submit Review', 'revora' ); ?></span>
 						<span class="revora-spinner"></span>
 					</button>
 				</div>
@@ -204,12 +204,12 @@ class Revora_Frontend {
 					'@type' => 'Person',
 					'name'  => $review->name,
 				),
-				'datePublished' => date( 'c', strtotime( $review->created_at ) ),
+				'datePublished' => gmdate( 'c', strtotime( $review->created_at ) ),
 				'reviewBody'    => $review->content,
 				'name'          => $review->title,
 			);
 		}
 
-		echo '<script type="application/ld+json">' . json_encode( $schema ) . '</script>';
+		echo '<script type="application/ld+json">' . wp_json_encode( $schema ) . '</script>';
 	}
 }

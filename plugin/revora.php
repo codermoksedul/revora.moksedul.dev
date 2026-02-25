@@ -116,7 +116,6 @@ class Revora {
 		if ( ! get_option( 'revora_settings' ) ) {
 			update_option( 'revora_settings', array(
 				'primary_color' => '#0073aa',
-				'custom_css'    => '',
 				'admin_email'   => get_option( 'admin_email' ),
 			) );
 		}
@@ -225,8 +224,8 @@ class Revora {
 	 */
 	public function add_action_links( $links ) {
 		$plugin_links = array(
-			'<a href="' . admin_url( 'admin.php?page=revora-settings' ) . '">' . __( 'Settings', 'revora' ) . '</a>',
-			'<a href="https://revora.moksedul.dev/upgrade" target="_blank" style="color: #39b54a; font-weight: bold;">' . __( 'Go Premium', 'revora' ) . '</a>',
+			'<a href="' . esc_url( admin_url( 'admin.php?page=revora-settings' ) ) . '">' . esc_html__( 'Settings', 'revora' ) . '</a>',
+			'<a href="' . esc_url( 'https://revora.moksedul.dev/upgrade' ) . '" target="_blank" style="color: #39b54a; font-weight: bold;">' . esc_html__( 'Go Premium', 'revora' ) . '</a>',
 		);
 		
 		return array_merge( $plugin_links, $links );

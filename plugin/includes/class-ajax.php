@@ -24,20 +24,20 @@ class Revora_Ajax {
 	 */
 	public function handle_submission() {
 		// Nonce check
-		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'revora_submit_nonce' ) ) {
+		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'revora_submit_nonce' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Security verification failed.', 'revora' ) ) );
 		}
 
 		// Sanitize and collect data
 		$data = array(
-			'category_slug'   => sanitize_text_field( $_POST['category_slug'] ),
-			'name'            => sanitize_text_field( $_POST['name'] ),
-			'email'           => sanitize_email( $_POST['email'] ),
-			'rating'          => intval( $_POST['rating'] ),
-			'title'           => sanitize_text_field( $_POST['title'] ),
-			'content'         => sanitize_textarea_field( $_POST['content'] ),
-			'ip_address'      => $_SERVER['REMOTE_ADDR'],
-			'revora_honeypot' => $_POST['revora_honeypot'], // For spam check
+			'category_slug'   => sanitize_text_field( wp_unslash( $_POST['category_slug'] ?? '' ) ),
+			'name'            => sanitize_text_field( wp_unslash( $_POST['name'] ?? '' ) ),
+			'email'           => sanitize_email( wp_unslash( $_POST['email'] ?? '' ) ),
+			'rating'          => intval( $_POST['rating'] ?? 0 ),
+			'title'           => sanitize_text_field( wp_unslash( $_POST['title'] ?? '' ) ),
+			'content'         => sanitize_textarea_field( wp_unslash( $_POST['content'] ?? '' ) ),
+			'ip_address'      => isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '',
+			'revora_honeypot' => isset( $_POST['revora_honeypot'] ) ? sanitize_text_field( wp_unslash( $_POST['revora_honeypot'] ) ) : '',
 		);
 
 		// Basic validation
