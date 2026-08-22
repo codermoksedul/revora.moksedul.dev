@@ -1,20 +1,58 @@
 jQuery(document).ready(function($) {
     'use strict';
+    
+    // Initialize International Telephone Input
+    var itiInstances = [];
+    $('.revora-form-container input[type="tel"], .revora-form-container input[name="phone"], .revora-form-container input[name="number"]').each(function() {
+        $(this).attr('type', 'tel'); // Ensure type is tel for better mobile keyboard
+        $(this).removeAttr('placeholder'); // Remove default or user-set placeholder to prevent confusing overlap
+        
+        // Restrict input to numbers only
+        $(this).on('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+        if (typeof window.intlTelInput === 'function') {
+            var iti = window.intlTelInput(this, {
+                utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.21/js/utils.js",
+                initialCountry: "auto",
+                separateDialCode: true,
+                autoPlaceholder: "off",
+                geoIpLookup: function(success, failure) {
+                    $.get("https://ipinfo.io", function() {}, "jsonp").always(function(resp) {
+                        var countryCode = (resp && resp.country) ? resp.country : "us";
+                        success(countryCode);
+                    });
+                }
+            });
+            itiInstances.push({ input: this, iti: iti });
+            
+            // Format on blur
+            $(this).on('blur', function() {
+                if (iti.isValidNumber()) {
+                    $(this).val(iti.getNumber());
+                }
+            });
+        }
+    });
 
     // Frontend Half & Full Star Interactive Picker
-    function updateFrontendStars($picker, rating) {
+    function updateFrontendStars($picker, rating, isHover = false) {
         $picker.find('.revora-star-btn').each(function() {
             var starIndex = parseFloat($(this).data('rating'));
-            $(this).removeClass('fill-1 active');
+            $(this).removeClass('fill-1 active hover-active');
+            
             if (rating >= starIndex) {
-                $(this).text('star').addClass('fill-1 active');
+                $(this).text('star').addClass(isHover ? 'hover-active fill-1' : 'active fill-1');
             } else if (rating >= (starIndex - 0.5)) {
-                $(this).text('star_half').addClass('fill-1 active');
+                $(this).text('star_half').addClass(isHover ? 'hover-active fill-1' : 'active fill-1');
             } else {
-                $(this).text('star').removeClass('fill-1 active');
+                $(this).text('star').removeClass('fill-1 active hover-active');
             }
         });
-        $picker.find('.revora-rating-score-badge').text(rating.toFixed(1) + ' / 5.0');
+        
+        if (!isHover) {
+            $picker.find('.revora-rating-score-badge').text(rating.toFixed(1) + ' / 5.0');
+        }
     }
 
     $(document).on('mousemove', '.revora-frontend-rating-picker .revora-star-btn', function(e) {
@@ -24,13 +62,13 @@ jQuery(document).ready(function($) {
         var x = e.pageX - offset.left;
         var hoverRating = (x < width / 2) ? (starIndex - 0.5) : starIndex;
         var $picker = $(this).closest('.revora-frontend-rating-picker');
-        updateFrontendStars($picker, hoverRating);
+        updateFrontendStars($picker, hoverRating, true);
     });
 
     $(document).on('mouseleave', '.revora-frontend-rating-picker', function() {
         var $picker = $(this);
-        var curRating = parseFloat($picker.attr('data-rating') || $picker.find('.revora-frontend-rating-val').val() || 5.0);
-        updateFrontendStars($picker, curRating);
+        var curRating = parseFloat($picker.attr('data-rating') || $picker.find('.revora-frontend-rating-val').val() || 0);
+        updateFrontendStars($picker, curRating, false);
     });
 
     $(document).on('click', '.revora-frontend-rating-picker .revora-star-btn', function(e) {
@@ -41,7 +79,7 @@ jQuery(document).ready(function($) {
         var selRating = (x < width / 2) ? (starIndex - 0.5) : starIndex;
         var $picker = $(this).closest('.revora-frontend-rating-picker');
         $picker.attr('data-rating', selRating);
-        updateFrontendStars($picker, selRating);
+        updateFrontendStars($picker, selRating, false);
         $picker.find('.revora-frontend-rating-val').val(selRating.toFixed(1));
     });
 
@@ -92,6 +130,48 @@ jQuery(document).ready(function($) {
         const $submitBtn = $form.find('.revora-submit-btn');
         const originalBtnText = $submitBtn.find('.btn-text').text();
         const $message = $form.find('.revora-form-message');
+        
+        // Manual Validation for Rating
+        var $ratingInput = $form.find('.revora-frontend-rating-val');
+        if ( $ratingInput.length && $ratingInput.attr('required') && parseFloat($ratingInput.val()) === 0 ) {
+            $message.html('<span class="material-symbols-outlined">error</span> Please select a star rating.').removeClass('success').addClass('error').fadeIn();
+            return;
+        }
+
+        // Manual Validation for Phone Number
+        var isValidPhone = true;
+        itiInstances.forEach(function(instance) {
+            var val = $(instance.input).val().trim();
+            if (val !== "") {
+                if (!instance.iti.isValidNumber()) {
+                    isValidPhone = false;
+                } else {
+                    // Update input with full international format before submitting
+                    $(instance.input).val(instance.iti.getNumber());
+                }
+            }
+        });
+        
+        if (!isValidPhone) {
+            $message.html('<span class="material-symbols-outlined">error</span> Please enter a valid phone number.').removeClass('success').addClass('error').fadeIn();
+            return;
+        }
+
+        // Manual Validation for File Size (1MB Limit)
+        var isFileSizeValid = true;
+        $form.find('input[type="file"]').each(function() {
+            if (this.files && this.files.length > 0) {
+                if (this.files[0].size > 1048576) {
+                    isFileSizeValid = false;
+                }
+            }
+        });
+        
+        if (!isFileSizeValid) {
+            $message.html('<span class="material-symbols-outlined">error</span> File size exceeds the 1MB limit. Please choose a smaller image.').removeClass('success').addClass('error').fadeIn();
+            return;
+        }
+
         const formData = new FormData(this);
 
         formData.append('action', 'revora_submit');
@@ -113,9 +193,9 @@ jQuery(document).ready(function($) {
                     $form[0].reset();
                     // Reset star rating picker
                     var $picker = $form.find('.revora-frontend-rating-picker');
-                    $picker.attr('data-rating', '5.0');
-                    $picker.find('.revora-frontend-rating-val').val('5.0');
-                    updateFrontendStars($picker, 5.0);
+                    $picker.attr('data-rating', '0');
+                    $picker.find('.revora-frontend-rating-val').val('0');
+                    updateFrontendStars($picker, 0);
                     
                     // Show Modern Success Popup
                     showSuccessModal(response.data.message);
@@ -297,6 +377,28 @@ jQuery(document).ready(function($) {
     // Custom File Input Sync
     $(document).on('change', '.revora-file-input', function() {
         var $this = $(this);
+        var $form = $this.closest('form');
+        var $message = $form.find('.revora-form-message');
+        
+        // Immediate File Size Validation (1MB)
+        if (this.files && this.files.length > 0) {
+            if (this.files[0].size > 1048576) {
+                $this.val(''); // Clear the input
+                $message.html('<span class="material-symbols-outlined">error</span> File size exceeds the 1MB limit. Please choose a smaller image.').removeClass('success').addClass('error').fadeIn();
+                
+                // Reset fake text to placeholder
+                var $text = $this.siblings('.revora-file-fake').find('.revora-file-text');
+                var originalText = $text.data('placeholder') || 'Choose file...';
+                $text.text(originalText);
+                return;
+            } else {
+                // Clear any previous error if valid
+                if ($message.hasClass('error') && $message.text().indexOf('File size') !== -1) {
+                    $message.fadeOut();
+                }
+            }
+        }
+        
         var fileName = $this.val().split('\\').pop();
         var $text = $this.siblings('.revora-file-fake').find('.revora-file-text');
         

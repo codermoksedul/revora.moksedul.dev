@@ -400,24 +400,23 @@ class Revora_Shortcodes {
 				align-items: center !important;
 			}
 			.{$widget_id} .revora-star-btn {
-				display: inline-flex !important;
-				align-items: center !important;
-				justify-content: center !important;
+				color: #cbd5e1 !important;
+				font-size: 24px !important;
+				transition: all 0.2s ease !important;
+				padding: 0 !important;
 				width: 36px !important;
 				height: 36px !important;
 				border: 1.5px solid #e2e8f0 !important;
-				border-radius: 8px !important;
-				background: #ffffff !important;
-				color: #cbd5e1 !important;
-				font-size: 18px !important;
-				transition: all 0.2s ease !important;
-				box-sizing: border-box !important;
-				padding: 0 !important;
+				border-radius: 6px !important;
+				display: flex !important;
+				align-items: center !important;
+				justify-content: center !important;
+				background-color: transparent !important;
 			}
-			.{$widget_id} .revora-star-btn.active {
-				border-color: var(--revora-star-filled, #fbbf24) !important;
+			.{$widget_id} .revora-star-btn.active,
+			.{$widget_id} .revora-star-btn.hover-active {
 				color: var(--revora-star-filled, #fbbf24) !important;
-				background: #fffdf5 !important;
+				border-color: var(--revora-star-filled, #fbbf24) !important;
 			}
 			#revora-success-modal-overlay .revora-modal-close-btn {
 				display: inline-block !important;
@@ -491,21 +490,41 @@ class Revora_Shortcodes {
 				$name = esc_attr( $field['key'] ?? '' );
 				$label = esc_html( $field['label'] ?? '' );
 				$placeholder = esc_attr( $field['placeholder'] ?? '' );
+				
+				// Auto-fill for logged-in users
+				$value = '';
+				if ( is_user_logged_in() ) {
+					$current_user = wp_get_current_user();
+					if ( 'name' === $name || 'author' === $name ) {
+						$value = $current_user->display_name;
+					} elseif ( 'email' === $name ) {
+						$value = $current_user->user_email;
+					} elseif ( 'phone' === $name || 'number' === $name ) {
+						// Check common meta keys for phone numbers (WooCommerce, LearnPress, etc.)
+						$phone_keys = array( 'phone', 'billing_phone', '_billing_phone', '_lp_billing_phone', 'lp_billing_phone' );
+						foreach ( $phone_keys as $meta_key ) {
+							$value = get_user_meta( $current_user->ID, $meta_key, true );
+							if ( ! empty( $value ) ) {
+								break;
+							}
+						}
+					}
+				}
 				?>
 				<div class="revora-form-field">
-					<label class="revora-field-label"><?php echo $label; ?> <?php if ( $required_attr ) echo '<span class="revora-req-star" style="color:#ef4444 !important; margin-left:3px; font-weight:700;">*</span>'; ?></label>
+					<label class="revora-field-label"><?php echo $label; ?> <?php if ( $required_attr ) echo '<span class="revora-req-star" style="color:#ef4444 !important; margin-left:3px; font-weight:700; font-size:18px; line-height:1; vertical-align: middle; display: inline-block; position: relative; top: 2px;">*</span>'; ?></label>
 					
 					<?php if ( 'textarea' === $field['type'] ) : ?>
 						<textarea name="<?php echo $name; ?>" rows="5" placeholder="<?php echo $placeholder; ?>" <?php echo $required_attr; ?>></textarea>
 						
 					<?php elseif ( 'rating' === $field['type'] ) : ?>
-						<div class="revora-frontend-rating-picker" data-rating="5.0" style="cursor:pointer !important;">
+						<div class="revora-frontend-rating-picker" data-rating="0" style="cursor:pointer !important;">
 							<div class="revora-frontend-stars" style="cursor:pointer !important;">
 								<?php for ( $i = 1; $i <= 5; $i++ ) : ?>
-									<span class="material-symbols-outlined revora-star-btn fill-1 active" data-rating="<?php echo esc_attr( $i ); ?>" style="cursor:pointer !important;">star</span>
+									<span class="material-symbols-outlined revora-star-btn" data-rating="<?php echo esc_attr( $i ); ?>" style="cursor:pointer !important;">star</span>
 								<?php endfor; ?>
 							</div>
-							<input type="hidden" name="<?php echo $name; ?>" class="revora-frontend-rating-val" value="5.0" <?php echo $required_attr; ?> />
+							<input type="hidden" name="<?php echo $name; ?>" class="revora-frontend-rating-val" value="0" <?php echo $required_attr; ?> />
 						</div>
 						
 					<?php elseif ( 'file' === $field['type'] || 'avatar' === $field['type'] ) : 
@@ -569,7 +588,7 @@ class Revora_Shortcodes {
 						</div>
 						
 					<?php else : // text, email, number, url, date, etc. ?>
-						<input type="<?php echo esc_attr( $field['type'] ); ?>" name="<?php echo $name; ?>" placeholder="<?php echo $placeholder; ?>" <?php echo $required_attr; ?>>
+						<input type="<?php echo esc_attr( $field['type'] ); ?>" name="<?php echo $name; ?>" value="<?php echo esc_attr( $value ); ?>" placeholder="<?php echo $placeholder; ?>" <?php echo $required_attr; ?>>
 					<?php endif; ?>
 				</div>
 				<?php

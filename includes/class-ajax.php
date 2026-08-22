@@ -30,6 +30,15 @@ class Revora_Ajax {
 
 		$form_id = isset( $_POST['form_id'] ) ? intval( $_POST['form_id'] ) : 0;
 
+		// Check file sizes (Limit: 1MB = 1048576 bytes)
+		if ( ! empty( $_FILES ) ) {
+			foreach ( $_FILES as $file ) {
+				if ( $file['size'] > 1048576 ) {
+					wp_send_json_error( array( 'message' => __( 'File size exceeds the 1MB limit. Please upload a smaller image.', 'revora' ) ) );
+				}
+			}
+		}
+
 		// Sanitize and collect standard data
 		$data = array(
 			'user_id'         => get_current_user_id(),
