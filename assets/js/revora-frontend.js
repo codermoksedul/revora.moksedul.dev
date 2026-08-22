@@ -14,15 +14,9 @@ jQuery(document).ready(function($) {
         if (typeof window.intlTelInput === 'function') {
             var iti = window.intlTelInput(this, {
                 utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.21/js/utils.js",
-                initialCountry: "auto",
+                initialCountry: "bd",
                 separateDialCode: true,
-                autoPlaceholder: "off",
-                geoIpLookup: function(success, failure) {
-                    $.get("https://ipinfo.io", function() {}, "jsonp").always(function(resp) {
-                        var countryCode = (resp && resp.country) ? resp.country : "us";
-                        success(countryCode);
-                    });
-                }
+                autoPlaceholder: "off"
             });
             itiInstances.push({ input: this, iti: iti });
             
