@@ -21,12 +21,13 @@ class Revora_Shortcodes {
 	 */
 	public function render_reviews_shortcode( $atts ) {
 		$atts = shortcode_atts( array(
-			'form_id'    => 0,
-			'form'       => 0,
-			'category'   => '',
-			'limit'      => 6,
-			'columns'    => 3,
-			'card_style' => 'classic',
+			'form_id'         => 0,
+			'form'            => 0,
+			'category'        => '',
+			'limit'           => 6,
+			'load_more_limit' => '',
+			'columns'         => 3,
+			'card_style'      => 'classic',
 		), $atts, 'revora_reviews' );
 
 		$form_id = ! empty( $atts['form_id'] ) ? intval( $atts['form_id'] ) : intval( $atts['form'] );
@@ -65,6 +66,7 @@ class Revora_Shortcodes {
 			data-form-id="<?php echo esc_attr( $form_id ); ?>"
 			data-category="<?php echo esc_attr( $atts['category'] ); ?>" 
 			data-limit="<?php echo esc_attr( $atts['limit'] ); ?>"
+			data-load-more-limit="<?php echo esc_attr( ! empty( $atts['load_more_limit'] ) ? $atts['load_more_limit'] : $atts['limit'] ); ?>"
 			data-columns="<?php echo esc_attr( $atts['columns'] ); ?>"
 			data-card-style="<?php echo esc_attr( $atts['card_style'] ); ?>">
 			
@@ -92,8 +94,8 @@ class Revora_Shortcodes {
 					if ( ! empty( $meta ) && is_array( $meta ) ) {
 						foreach ( $meta as $k => $v ) {
 							$k_lower = strtolower( $k );
-							if ( ( false !== strpos( $k_lower, 'phone' ) || 'tel' === $k_lower || false !== strpos( $k_lower, 'contact' ) || false !== strpos( $k_lower, 'mobile' ) || 'number' === $k_lower ) && ! empty( $v ) && is_string( $v ) ) {
-								$masked_contact = trim( $v );
+							if ( ( false !== strpos( $k_lower, 'phone' ) || 'tel' === $k_lower || false !== strpos( $k_lower, 'contact' ) || false !== strpos( $k_lower, 'mobile' ) || false !== strpos( $k_lower, 'number' ) || false !== strpos( $k_lower, 'whatsapp' ) ) && ! empty( $v ) && ( is_string( $v ) || is_numeric( $v ) ) ) {
+								$masked_contact = trim( (string) $v );
 								break;
 							}
 						}
@@ -300,27 +302,37 @@ class Revora_Shortcodes {
 				--revora-star-filled: " . esc_attr( $plugin_settings['star_color'] ) . ";
 			}
 			.{$widget_id} .revora-form-row {
-				display: flex !important;
-				flex-direction: row !important;
-				flex-wrap: nowrap !important;
-				gap: 16px !important;
-				margin-bottom: 0 !important;
-				width: 100% !important;
-				box-sizing: border-box !important;
+				display: flex;
+				flex-direction: row;
+				flex-wrap: nowrap;
+				gap: 16px;
+				margin-bottom: 0;
+				width: 100%;
+				box-sizing: border-box;
 			}
 			.{$widget_id} .revora-form-col {
-				flex: 1 1 0% !important;
-				min-width: 0 !important;
-				box-sizing: border-box !important;
+				flex: 1 1 0%;
+				min-width: 0;
+				width: 50%;
+				box-sizing: border-box;
 			}
 			.{$widget_id} .revora-form-col .revora-form-field {
-				width: 100% !important;
-				margin-bottom: 16px !important;
+				width: 100%;
+				margin-bottom: 16px;
 			}
-			@media (max-width: 540px) {
+			@media (max-width: 767px) {
 				.{$widget_id} .revora-form-row {
 					flex-direction: column !important;
+					flex-wrap: wrap !important;
 					gap: 0 !important;
+					width: 100% !important;
+				}
+				.{$widget_id} .revora-form-col {
+					flex: 1 1 100% !important;
+					width: 100% !important;
+					max-width: 100% !important;
+					min-width: 100% !important;
+					display: block !important;
 				}
 			}
 			.{$widget_id} .revora-custom-file-wrap {
@@ -391,10 +403,10 @@ class Revora_Shortcodes {
 				display: inline-flex !important;
 				align-items: center !important;
 				justify-content: center !important;
-				width: 52px !important;
-				height: 52px !important;
+				width: 36px !important;
+				height: 36px !important;
 				border: 1.5px solid #e2e8f0 !important;
-				border-radius: 10px !important;
+				border-radius: 8px !important;
 				background: #ffffff !important;
 				color: #cbd5e1 !important;
 				font-size: 18px !important;
@@ -406,6 +418,20 @@ class Revora_Shortcodes {
 				border-color: var(--revora-star-filled, #fbbf24) !important;
 				color: var(--revora-star-filled, #fbbf24) !important;
 				background: #fffdf5 !important;
+			}
+			#revora-success-modal-overlay .revora-modal-close-btn {
+				display: inline-block !important;
+				width: 100% !important;
+				background: var(--revora-primary, #2563eb) !important;
+				color: #ffffff !important;
+				border: none !important;
+				border-radius: 10px !important;
+				padding: 14px 24px !important;
+				font-size: 16px !important;
+				font-weight: 600 !important;
+				cursor: pointer !important;
+				box-sizing: border-box !important;
+				box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25) !important;
 			}
 		";
 		echo '<style type="text/css">' . $custom_css . '</style>';
@@ -451,10 +477,10 @@ class Revora_Shortcodes {
 			}
 
 			if ( 'row' === $field['type'] ) {
-				echo '<div class="revora-form-row" style="display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important; gap:16px !important; width:100% !important; margin-bottom:0 !important; box-sizing:border-box !important;">';
+				echo '<div class="revora-form-row">';
 				if ( ! empty( $field['columns'] ) && is_array( $field['columns'] ) ) {
 					foreach ( $field['columns'] as $col_fields ) {
-						echo '<div class="revora-form-col" style="flex:1 1 0% !important; min-width:0 !important; width:50% !important; box-sizing:border-box !important;">';
+						echo '<div class="revora-form-col">';
 						$this->render_frontend_fields( $col_fields, $widget_id );
 						echo '</div>';
 					}

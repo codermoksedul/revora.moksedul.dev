@@ -94,7 +94,7 @@ class Revora_Reviews_Slider_Widget extends \Elementor\Widget_Base {
 				'type'    => \Elementor\Controls_Manager::SELECT,
 				'options' => array(
 					'classic'      => __( 'Classic', 'revora' ),
-					'verified'     => __( 'Verified / Student Badge', 'revora' ),
+					'verified'     => __( 'Badge', 'revora' ),
 					'modern'       => __( 'Modern', 'revora' ),
 					'boxed'        => __( 'Boxed', 'revora' ),
 					'horizontal'   => __( 'Horizontal', 'revora' ),
@@ -341,6 +341,42 @@ class Revora_Reviews_Slider_Widget extends \Elementor\Widget_Base {
 			'show_title',
 			array(
 				'label'        => __( 'Show Review Title', 'revora' ),
+				'type'         => \Elementor\Controls_Manager::SWITCHER,
+				'label_on'     => __( 'Show', 'revora' ),
+				'label_off'    => __( 'Hide', 'revora' ),
+				'return_value' => 'yes',
+				'default'      => 'yes',
+			)
+		);
+
+		$this->add_control(
+			'show_avatar',
+			array(
+				'label'        => __( 'Show Profile Image', 'revora' ),
+				'type'         => \Elementor\Controls_Manager::SWITCHER,
+				'label_on'     => __( 'Show', 'revora' ),
+				'label_off'    => __( 'Hide', 'revora' ),
+				'return_value' => 'yes',
+				'default'      => 'yes',
+			)
+		);
+
+		$this->add_control(
+			'show_subtitle',
+			array(
+				'label'        => __( 'Show Phone/Email', 'revora' ),
+				'type'         => \Elementor\Controls_Manager::SWITCHER,
+				'label_on'     => __( 'Show', 'revora' ),
+				'label_off'    => __( 'Hide', 'revora' ),
+				'return_value' => 'yes',
+				'default'      => 'yes',
+			)
+		);
+
+		$this->add_control(
+			'show_content',
+			array(
+				'label'        => __( 'Show Review Content', 'revora' ),
 				'type'         => \Elementor\Controls_Manager::SWITCHER,
 				'label_on'     => __( 'Show', 'revora' ),
 				'label_off'    => __( 'Hide', 'revora' ),
@@ -903,18 +939,15 @@ class Revora_Reviews_Slider_Widget extends \Elementor\Widget_Base {
 		if ( 'outside' === $settings['arrow_position'] ) {
 			$container_class .= ' arrows-outside';
 		}
-		if ( 'yes' !== $settings['show_author'] ) {
-			$container_class .= ' revora-hide-author';
-		}
-		if ( 'yes' !== $settings['show_date'] ) {
-			$container_class .= ' revora-hide-date';
-		}
-		if ( 'yes' !== $settings['show_rating'] ) {
-			$container_class .= ' revora-hide-rating';
-		}
-		if ( 'yes' !== $settings['show_title'] ) {
-			$container_class .= ' revora-hide-title';
-		}
+		$container_class .= ' revora-reviews-slider-widget swiper-container';
+		if ( 'yes' !== $settings['show_author'] ) $container_class .= ' revora-hide-author';
+		if ( 'yes' !== $settings['show_date'] ) $container_class .= ' revora-hide-date';
+		if ( 'yes' !== $settings['show_rating'] ) $container_class .= ' revora-hide-rating';
+		if ( 'yes' !== $settings['show_title'] ) $container_class .= ' revora-hide-title';
+		if ( 'yes' !== ( $settings['show_avatar'] ?? 'yes' ) ) $container_class .= ' revora-hide-avatar';
+		if ( 'yes' !== ( $settings['show_subtitle'] ?? 'yes' ) ) $container_class .= ' revora-hide-subtitle';
+		if ( 'yes' !== ( $settings['show_content'] ?? 'yes' ) ) $container_class .= ' revora-hide-content';
+
 		?>
 		<div class="<?php echo esc_attr( $container_class ); ?>" data-slider-settings='<?php echo wp_json_encode( $slider_settings ); ?>'>
 			<div class="revora-slider-container <?php echo esc_attr( $settings['arrow_position'] ); ?>-arrows">
@@ -941,8 +974,8 @@ class Revora_Reviews_Slider_Widget extends \Elementor\Widget_Base {
 							if ( ! empty( $meta ) && is_array( $meta ) ) {
 								foreach ( $meta as $k => $v ) {
 									$k_lower = strtolower( $k );
-									if ( ( false !== strpos( $k_lower, 'phone' ) || 'tel' === $k_lower || false !== strpos( $k_lower, 'contact' ) || false !== strpos( $k_lower, 'mobile' ) || 'number' === $k_lower ) && ! empty( $v ) && is_string( $v ) ) {
-										$masked_contact = trim( $v );
+									if ( ( false !== strpos( $k_lower, 'phone' ) || 'tel' === $k_lower || false !== strpos( $k_lower, 'contact' ) || false !== strpos( $k_lower, 'mobile' ) || false !== strpos( $k_lower, 'number' ) || false !== strpos( $k_lower, 'whatsapp' ) ) && ! empty( $v ) && ( is_string( $v ) || is_numeric( $v ) ) ) {
+										$masked_contact = trim( (string) $v );
 										break;
 									}
 								}
@@ -1033,3 +1066,4 @@ class Revora_Reviews_Slider_Widget extends \Elementor\Widget_Base {
 		<?php
 	}
 }
+

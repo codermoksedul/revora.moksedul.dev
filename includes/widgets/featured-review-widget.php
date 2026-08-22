@@ -191,18 +191,6 @@ class Revora_Featured_Review_Widget extends \Elementor\Widget_Base {
 		);
 
 		$this->add_control(
-			'show_subtitle',
-			array(
-				'label'        => __( 'Show Role / Subtitle', 'revora' ),
-				'type'         => \Elementor\Controls_Manager::SWITCHER,
-				'label_on'     => __( 'Show', 'revora' ),
-				'label_off'    => __( 'Hide', 'revora' ),
-				'return_value' => 'yes',
-				'default'      => 'yes',
-			)
-		);
-
-		$this->add_control(
 			'default_subtitle',
 			array(
 				'label'     => __( 'Default Subtitle / Role', 'revora' ),
@@ -218,6 +206,42 @@ class Revora_Featured_Review_Widget extends \Elementor\Widget_Base {
 			'show_stars',
 			array(
 				'label'        => __( 'Show Star Rating', 'revora' ),
+				'type'         => \Elementor\Controls_Manager::SWITCHER,
+				'label_on'     => __( 'Show', 'revora' ),
+				'label_off'    => __( 'Hide', 'revora' ),
+				'return_value' => 'yes',
+				'default'      => 'yes',
+			)
+		);
+
+		$this->add_control(
+			'show_title',
+			array(
+				'label'        => __( 'Show Review Title', 'revora' ),
+				'type'         => \Elementor\Controls_Manager::SWITCHER,
+				'label_on'     => __( 'Show', 'revora' ),
+				'label_off'    => __( 'Hide', 'revora' ),
+				'return_value' => 'yes',
+				'default'      => 'yes',
+			)
+		);
+
+		$this->add_control(
+			'show_subtitle',
+			array(
+				'label'        => __( 'Show Subtitle (Phone/Email)', 'revora' ),
+				'type'         => \Elementor\Controls_Manager::SWITCHER,
+				'label_on'     => __( 'Show', 'revora' ),
+				'label_off'    => __( 'Hide', 'revora' ),
+				'return_value' => 'yes',
+				'default'      => 'yes',
+			)
+		);
+
+		$this->add_control(
+			'show_content',
+			array(
+				'label'        => __( 'Show Review Content', 'revora' ),
 				'type'         => \Elementor\Controls_Manager::SWITCHER,
 				'label_on'     => __( 'Show', 'revora' ),
 				'label_off'    => __( 'Hide', 'revora' ),
@@ -1037,8 +1061,17 @@ class Revora_Featured_Review_Widget extends \Elementor\Widget_Base {
 			}
 		}
 		</style>
+		<?php 
+		$container_class = 'revora-featured-review-widget';
+		if ( 'yes' !== ( $settings['show_author'] ?? 'yes' ) ) $container_class .= ' revora-hide-author';
+		if ( 'yes' !== ( $settings['show_stars'] ?? 'yes' ) ) $container_class .= ' revora-hide-rating';
+		if ( 'yes' !== ( $settings['show_title'] ?? 'yes' ) ) $container_class .= ' revora-hide-title';
+		if ( 'yes' !== ( $settings['show_avatar'] ?? 'yes' ) ) $container_class .= ' revora-hide-avatar';
+		if ( 'yes' !== ( $settings['show_subtitle'] ?? 'yes' ) ) $container_class .= ' revora-hide-subtitle';
+		if ( 'yes' !== ( $settings['show_content'] ?? 'yes' ) ) $container_class .= ' revora-hide-content';
+		?>
 
-		<div class="revora-featured-widget-wrap" data-slider-settings='<?php echo wp_json_encode( $slider_settings ); ?>'>
+		<div class="<?php echo esc_attr( $container_class ); ?>" data-slider-settings='<?php echo wp_json_encode( $slider_settings ); ?>'>
 			<div class="swiper revora-featured-slider revora-featured-slider-<?php echo esc_attr( $widget_id ); ?>">
 				<div class="swiper-wrapper">
 					<?php foreach ( $reviews as $review ) : 
@@ -1060,20 +1093,27 @@ class Revora_Featured_Review_Widget extends \Elementor\Widget_Base {
 							$initials = 'AR';
 						}
 
-						$masked_contact = '';
+						$phone = '';
 						$meta = ! empty( $review->id ) ? $db->get_review_meta( $review->id ) : array();
 						if ( ! empty( $meta ) && is_array( $meta ) ) {
 							foreach ( $meta as $k => $v ) {
 								$k_lower = strtolower( $k );
-								if ( ( false !== strpos( $k_lower, 'phone' ) || 'tel' === $k_lower || false !== strpos( $k_lower, 'contact' ) || false !== strpos( $k_lower, 'mobile' ) || 'number' === $k_lower ) && ! empty( $v ) && is_string( $v ) ) {
-									$masked_contact = trim( $v );
+								if ( ( false !== strpos( $k_lower, 'phone' ) || 'tel' === $k_lower || false !== strpos( $k_lower, 'contact' ) || false !== strpos( $k_lower, 'mobile' ) || false !== strpos( $k_lower, 'number' ) || false !== strpos( $k_lower, 'whatsapp' ) ) && ! empty( $v ) && ( is_string( $v ) || is_numeric( $v ) ) ) {
+									$phone = trim( (string) $v );
 									break;
 								}
 							}
 						}
-						if ( empty( $masked_contact ) && ! empty( $review->email ) ) {
+
+						// Phone number gets highest priority
+						if ( ! empty( $phone ) ) {
+							$masked_contact = $phone;
+						} elseif ( ! empty( $review->email ) ) {
 							$masked_contact = trim( $review->email );
+						} else {
+							$masked_contact = '';
 						}
+
 						if ( ! empty( $masked_contact ) ) {
 							$len = mb_strlen( $masked_contact );
 							if ( $len <= 6 ) {
@@ -1107,7 +1147,7 @@ class Revora_Featured_Review_Widget extends \Elementor\Widget_Base {
 
 								<div class="revora-featured-footer">
 									<div class="revora-featured-author-info">
-										<?php if ( 'yes' === $settings['show_avatar'] ) : ?>
+										<?php if ( 'yes' === ( $settings['show_avatar'] ?? 'yes' ) ) : ?>
 											<div class="revora-featured-avatar">
 												<?php if ( ! empty( $avatar_url ) ) : ?>
 													<img src="<?php echo esc_url( $avatar_url ); ?>" alt="<?php echo esc_attr( $review->name ); ?>" />
@@ -1118,10 +1158,10 @@ class Revora_Featured_Review_Widget extends \Elementor\Widget_Base {
 										<?php endif; ?>
 
 										<div class="revora-featured-author-meta">
-											<?php if ( 'yes' === $settings['show_author'] ) : ?>
+											<?php if ( 'yes' === ( $settings['show_author'] ?? 'yes' ) ) : ?>
 												<div class="revora-featured-author-name"><?php echo esc_html( $review->name ); ?></div>
 											<?php endif; ?>
-											<?php if ( 'yes' === $settings['show_subtitle'] && ! empty( $subtitle ) ) : ?>
+											<?php if ( 'yes' === ( $settings['show_subtitle'] ?? 'yes' ) && ! empty( $subtitle ) ) : ?>
 												<div class="revora-featured-author-subtitle"><?php echo esc_html( $subtitle ); ?></div>
 											<?php endif; ?>
 										</div>
@@ -1158,3 +1198,4 @@ class Revora_Featured_Review_Widget extends \Elementor\Widget_Base {
 		<?php
 	}
 }
+

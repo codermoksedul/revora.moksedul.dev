@@ -144,6 +144,7 @@ jQuery(document).ready(function($) {
         const form_id = parseInt($container.data('form-id')) || 0;
         const category = $container.data('category') || '';
         const limit = parseInt($container.data('limit')) || 6;
+        const load_more_limit = parseInt($container.data('load-more-limit')) || limit;
         const card_style = $container.data('card-style') || 'classic';
         let page = parseInt($btn.data('page')) || 1;
 
@@ -159,7 +160,8 @@ jQuery(document).ready(function($) {
                 form_id: form_id,
                 category: category,
                 page: page,
-                limit: limit,
+                initial_limit: limit,
+                limit: load_more_limit,
                 card_style: card_style
             },
             success: function(response) {

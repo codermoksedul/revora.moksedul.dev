@@ -177,10 +177,12 @@ class Revora_Ajax {
 		check_ajax_referer( 'revora_nonce', 'nonce' );
 
 		$form_id    = isset( $_POST['form_id'] ) ? intval( wp_unslash( $_POST['form_id'] ) ) : 0;
-		$page       = isset( $_POST['page'] ) ? intval( wp_unslash( $_POST['page'] ) ) : 1;
-		$limit      = isset( $_POST['limit'] ) ? intval( wp_unslash( $_POST['limit'] ) ) : 6;
-		$card_style = isset( $_POST['card_style'] ) ? sanitize_text_field( wp_unslash( $_POST['card_style'] ) ) : 'classic';
-		$offset = $page * $limit;
+		$page          = isset( $_POST['page'] ) ? intval( wp_unslash( $_POST['page'] ) ) : 1;
+		$initial_limit = isset( $_POST['initial_limit'] ) ? intval( wp_unslash( $_POST['initial_limit'] ) ) : 6;
+		$limit         = isset( $_POST['limit'] ) ? intval( wp_unslash( $_POST['limit'] ) ) : 6;
+		$card_style    = isset( $_POST['card_style'] ) ? sanitize_text_field( wp_unslash( $_POST['card_style'] ) ) : 'classic';
+		
+		$offset = $initial_limit + ( ( $page - 1 ) * $limit );
 
 		$db = new Revora_DB();
 		$reviews = $db->get_approved_reviews( $form_id, $limit, $offset );
@@ -217,8 +219,8 @@ class Revora_Ajax {
 			if ( ! empty( $meta ) && is_array( $meta ) ) {
 				foreach ( $meta as $k => $v ) {
 					$k_lower = strtolower( $k );
-					if ( ( false !== strpos( $k_lower, 'phone' ) || 'tel' === $k_lower || false !== strpos( $k_lower, 'contact' ) || false !== strpos( $k_lower, 'mobile' ) || 'number' === $k_lower ) && ! empty( $v ) && is_string( $v ) ) {
-						$masked_contact = trim( $v );
+					if ( ( false !== strpos( $k_lower, 'phone' ) || 'tel' === $k_lower || false !== strpos( $k_lower, 'contact' ) || false !== strpos( $k_lower, 'mobile' ) || false !== strpos( $k_lower, 'number' ) || false !== strpos( $k_lower, 'whatsapp' ) ) && ! empty( $v ) && ( is_string( $v ) || is_numeric( $v ) ) ) {
+						$masked_contact = trim( (string) $v );
 						break;
 					}
 				}

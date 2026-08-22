@@ -2102,10 +2102,11 @@ class Revora_Review_List_Table extends WP_List_Table {
 		}
 		$stars .= '<span class="revora-admin-rating-badge">' . number_format( $r_val, 1 ) . '</span>';
 		$stars .= '</div>';
+		$display_name = ! empty( $item->name ) ? $item->name : ( ! empty( $item->title ) ? $item->title : __( 'Anonymous', 'revora' ) );
 
 		return sprintf( '%s<div class="revora-table-review-title"><strong>%s</strong></div>%s',
 			$stars,
-			esc_html( $item->title ),
+			esc_html( $display_name ),
 			$this->row_actions( $actions )
 		);
 	}

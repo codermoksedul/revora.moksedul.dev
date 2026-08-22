@@ -59,7 +59,18 @@ class Revora_Reviews_Display_Widget extends \Elementor\Widget_Base {
 		$this->add_control(
 			'limit',
 			array(
-				'label'   => __( 'Number of Reviews', 'revora' ),
+				'label'   => __( 'Initial Number of Reviews', 'revora' ),
+				'type'    => \Elementor\Controls_Manager::NUMBER,
+				'default' => 6,
+				'min'     => 1,
+				'max'     => 100,
+			)
+		);
+
+		$this->add_control(
+			'load_more_limit',
+			array(
+				'label'   => __( 'Reviews Per Load More', 'revora' ),
 				'type'    => \Elementor\Controls_Manager::NUMBER,
 				'default' => 6,
 				'min'     => 1,
@@ -85,7 +96,7 @@ class Revora_Reviews_Display_Widget extends \Elementor\Widget_Base {
 				'type'    => \Elementor\Controls_Manager::SELECT,
 				'options' => array(
 					'classic'      => __( 'Classic', 'revora' ),
-					'verified'     => __( 'Verified / Student Badge', 'revora' ),
+					'verified'     => __( 'Badge', 'revora' ),
 					'modern'       => __( 'Modern', 'revora' ),
 					'boxed'        => __( 'Boxed', 'revora' ),
 					'horizontal'   => __( 'Horizontal', 'revora' ),
@@ -213,6 +224,42 @@ class Revora_Reviews_Display_Widget extends \Elementor\Widget_Base {
 			'show_title',
 			array(
 				'label'        => __( 'Show Review Title', 'revora' ),
+				'type'         => \Elementor\Controls_Manager::SWITCHER,
+				'label_on'     => __( 'Show', 'revora' ),
+				'label_off'    => __( 'Hide', 'revora' ),
+				'return_value' => 'yes',
+				'default'      => 'yes',
+			)
+		);
+
+		$this->add_control(
+			'show_avatar',
+			array(
+				'label'        => __( 'Show Profile Image', 'revora' ),
+				'type'         => \Elementor\Controls_Manager::SWITCHER,
+				'label_on'     => __( 'Show', 'revora' ),
+				'label_off'    => __( 'Hide', 'revora' ),
+				'return_value' => 'yes',
+				'default'      => 'yes',
+			)
+		);
+
+		$this->add_control(
+			'show_subtitle',
+			array(
+				'label'        => __( 'Show Phone/Email', 'revora' ),
+				'type'         => \Elementor\Controls_Manager::SWITCHER,
+				'label_on'     => __( 'Show', 'revora' ),
+				'label_off'    => __( 'Hide', 'revora' ),
+				'return_value' => 'yes',
+				'default'      => 'yes',
+			)
+		);
+
+		$this->add_control(
+			'show_content',
+			array(
+				'label'        => __( 'Show Review Content', 'revora' ),
 				'type'         => \Elementor\Controls_Manager::SWITCHER,
 				'label_on'     => __( 'Show', 'revora' ),
 				'label_off'    => __( 'Hide', 'revora' ),
@@ -772,6 +819,7 @@ class Revora_Reviews_Display_Widget extends \Elementor\Widget_Base {
 		$settings = $this->get_settings_for_display();
 		$form_id = ! empty( $settings['form_id'] ) ? intval( $settings['form_id'] ) : 0;
 		$limit = ! empty( $settings['limit'] ) ? $settings['limit'] : 6;
+		$load_more_limit = ! empty( $settings['load_more_limit'] ) ? $settings['load_more_limit'] : $limit;
 		$columns = ! empty( $settings['columns'] ) ? $settings['columns'] : 3;
 		$card_style = ! empty( $settings['card_style'] ) ? $settings['card_style'] : 'classic';
 
@@ -782,11 +830,15 @@ class Revora_Reviews_Display_Widget extends \Elementor\Widget_Base {
 		if ( 'yes' !== $settings['show_date'] ) $container_class .= ' revora-hide-date';
 		if ( 'yes' !== $settings['show_rating'] ) $container_class .= ' revora-hide-rating';
 		if ( 'yes' !== $settings['show_title'] ) $container_class .= ' revora-hide-title';
+		if ( 'yes' !== ( $settings['show_avatar'] ?? 'yes' ) ) $container_class .= ' revora-hide-avatar';
+		if ( 'yes' !== ( $settings['show_subtitle'] ?? 'yes' ) ) $container_class .= ' revora-hide-subtitle';
+		if ( 'yes' !== ( $settings['show_content'] ?? 'yes' ) ) $container_class .= ' revora-hide-content';
 		if ( 'yes' !== $settings['show_load_more'] ) $container_class .= ' revora-hide-load-more';
 
 		echo '<div class="' . esc_attr( $container_class ) . '" data-load-more-text="' . esc_attr( $settings['load_more_text'] ) . '">';
 		// Use shortcode to render reviews
-		echo do_shortcode( '[revora_reviews form_id="' . esc_attr( $form_id ) . '" limit="' . esc_attr( $limit ) . '" columns="' . esc_attr( $columns ) . '" card_style="' . esc_attr( $card_style ) . '"]' );
+		echo do_shortcode( '[revora_reviews form_id="' . esc_attr( $form_id ) . '" limit="' . esc_attr( $limit ) . '" load_more_limit="' . esc_attr( $load_more_limit ) . '" columns="' . esc_attr( $columns ) . '" card_style="' . esc_attr( $card_style ) . '"]' );
 		echo '</div>';
 	}
 }
+
