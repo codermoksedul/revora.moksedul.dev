@@ -324,18 +324,6 @@ class Revora_Featured_Review_Widget extends \Elementor\Widget_Base {
 			)
 		);
 
-		$this->add_control(
-			'show_pagination',
-			array(
-				'label'        => __( 'Show Pagination Dots', 'revora' ),
-				'type'         => \Elementor\Controls_Manager::SWITCHER,
-				'label_on'     => __( 'Show', 'revora' ),
-				'label_off'    => __( 'Hide', 'revora' ),
-				'return_value' => 'yes',
-				'default'      => 'yes',
-			)
-		);
-
 		$this->end_controls_section();
 
 		// Style Tab - Card Container
@@ -798,28 +786,6 @@ class Revora_Featured_Review_Widget extends \Elementor\Widget_Base {
 			)
 		);
 
-		$this->add_control(
-			'dot_color',
-			array(
-				'label'     => __( 'Dot Color', 'revora' ),
-				'type'      => \Elementor\Controls_Manager::COLOR,
-				'selectors' => array(
-					'{{WRAPPER}} .swiper-pagination-bullet' => 'background-color: {{VALUE}} !important; opacity: 0.4;',
-				),
-			)
-		);
-
-		$this->add_control(
-			'dot_active_color',
-			array(
-				'label'     => __( 'Active Dot Color', 'revora' ),
-				'type'      => \Elementor\Controls_Manager::COLOR,
-				'selectors' => array(
-					'{{WRAPPER}} .swiper-pagination-bullet-active' => 'background-color: {{VALUE}} !important; opacity: 1;',
-				),
-			)
-		);
-
 		$this->end_controls_section();
 	}
 
@@ -889,9 +855,188 @@ class Revora_Featured_Review_Widget extends \Elementor\Widget_Base {
 			'speed'          => ! empty( $settings['speed'] ) ? intval( $settings['speed'] ) : 600,
 			'effect'         => $settings['effect'] ?? 'fade',
 			'showArrows'     => 'yes' === $settings['show_arrows'] && $is_multiple,
-			'showPagination' => 'yes' === $settings['show_pagination'] && $is_multiple,
+			'showPagination' => false,
 		);
 		?>
+
+		<style>
+		.revora-featured-slider-<?php echo esc_attr( $widget_id ); ?> {
+			position: relative;
+			width: 100%;
+			overflow: hidden;
+			border-radius: 28px;
+		}
+		.revora-featured-slider-<?php echo esc_attr( $widget_id ); ?> .swiper-slide {
+			height: auto;
+			display: flex;
+			box-sizing: border-box;
+		}
+		.revora-featured-slider-<?php echo esc_attr( $widget_id ); ?> .revora-featured-card {
+			position: relative;
+			width: 100%;
+			background: radial-gradient(circle at 85% 20%, #152449 0%, #0b1328 60%, #070d1e 100%);
+			border-radius: 28px;
+			padding: 48px 52px;
+			color: #ffffff;
+			box-sizing: border-box;
+			display: flex;
+			flex-direction: column;
+			justify-content: space-between;
+			overflow: hidden;
+			box-shadow: 0 20px 45px -15px rgba(2, 6, 23, 0.5);
+			border: 1px solid rgba(255, 255, 255, 0.06);
+			transition: transform 0.3s ease, box-shadow 0.3s ease;
+		}
+		.revora-featured-slider-<?php echo esc_attr( $widget_id ); ?> .revora-featured-watermark-quote {
+			position: absolute;
+			top: -15px;
+			left: 36px;
+			font-size: 140px;
+			font-family: Georgia, serif;
+			line-height: 1;
+			color: #1e3a8a;
+			opacity: 0.22;
+			pointer-events: none;
+			user-select: none;
+			z-index: 1;
+		}
+		.revora-featured-slider-<?php echo esc_attr( $widget_id ); ?> .revora-featured-badge-wrap {
+			position: relative;
+			z-index: 2;
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			margin-bottom: 24px;
+			padding: 0;
+			width: fit-content;
+		}
+		.revora-featured-slider-<?php echo esc_attr( $widget_id ); ?> .revora-featured-badge-dot {
+			width: 7px;
+			height: 7px;
+			border-radius: 50%;
+			background-color: #3b82f6;
+			box-shadow: 0 0 10px #3b82f6;
+			display: inline-block;
+			flex-shrink: 0;
+		}
+		.revora-featured-slider-<?php echo esc_attr( $widget_id ); ?> .revora-featured-badge-text {
+			font-size: 11.5px;
+			font-weight: 700;
+			letter-spacing: 0.12em;
+			text-transform: uppercase;
+			color: #94a3b8;
+			line-height: 1;
+		}
+		.revora-featured-slider-<?php echo esc_attr( $widget_id ); ?> .revora-featured-content-wrap {
+			position: relative;
+			z-index: 2;
+			margin-bottom: 36px;
+			flex-grow: 1;
+		}
+		.revora-featured-slider-<?php echo esc_attr( $widget_id ); ?> .revora-featured-quote {
+			margin: 0;
+			padding: 0;
+			border: none;
+			background: none;
+			font-size: 26px;
+			font-weight: 600;
+			line-height: 1.48;
+			color: #f8fafc;
+			letter-spacing: -0.015em;
+		}
+		.revora-featured-slider-<?php echo esc_attr( $widget_id ); ?> .revora-featured-footer {
+			position: relative;
+			z-index: 2;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			flex-wrap: wrap;
+			gap: 16px;
+			margin-top: auto;
+		}
+		.revora-featured-slider-<?php echo esc_attr( $widget_id ); ?> .revora-featured-author-info {
+			display: flex;
+			align-items: center;
+			gap: 14px;
+		}
+		.revora-featured-slider-<?php echo esc_attr( $widget_id ); ?> .revora-featured-avatar {
+			width: 44px;
+			height: 44px;
+			min-width: 44px;
+			border-radius: 50%;
+			overflow: hidden;
+			flex-shrink: 0;
+			background: #1e293b;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+		.revora-featured-slider-<?php echo esc_attr( $widget_id ); ?> .revora-featured-avatar img {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+		}
+		.revora-featured-slider-<?php echo esc_attr( $widget_id ); ?> .revora-featured-avatar-initials {
+			width: 100%;
+			height: 100%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			background: #1e293b;
+			color: #93c5fd;
+			font-weight: 700;
+			font-size: 16px;
+			text-transform: uppercase;
+			user-select: none;
+		}
+		.revora-featured-slider-<?php echo esc_attr( $widget_id ); ?> .revora-featured-author-meta {
+			display: flex;
+			flex-direction: column;
+			gap: 3px;
+		}
+		.revora-featured-slider-<?php echo esc_attr( $widget_id ); ?> .revora-featured-author-name {
+			font-size: 16px;
+			font-weight: 700;
+			color: #ffffff;
+			line-height: 1.2;
+		}
+		.revora-featured-slider-<?php echo esc_attr( $widget_id ); ?> .revora-featured-author-subtitle {
+			font-size: 13px;
+			font-weight: 400;
+			color: #94a3b8;
+			line-height: 1.2;
+		}
+		.revora-featured-slider-<?php echo esc_attr( $widget_id ); ?> .revora-featured-stars {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+			color: #fbbf24;
+		}
+		.revora-featured-slider-<?php echo esc_attr( $widget_id ); ?> .revora-featured-stars .material-symbols-outlined {
+			font-size: 20px;
+			line-height: 1;
+			color: #fbbf24;
+			display: inline-block;
+		}
+		.revora-featured-slider-<?php echo esc_attr( $widget_id ); ?> .revora-featured-stars .material-symbols-outlined.fill-1 {
+			font-variation-settings: 'FILL' 1;
+		}
+		@media (max-width: 767px) {
+			.revora-featured-slider-<?php echo esc_attr( $widget_id ); ?> .revora-featured-card {
+				padding: 32px 24px;
+				border-radius: 20px;
+			}
+			.revora-featured-slider-<?php echo esc_attr( $widget_id ); ?> .revora-featured-quote {
+				font-size: 19px;
+				line-height: 1.42;
+			}
+			.revora-featured-slider-<?php echo esc_attr( $widget_id ); ?> .revora-featured-watermark-quote {
+				font-size: 100px;
+				left: 20px;
+				top: -10px;
+			}
+		}
+		</style>
 
 		<div class="revora-featured-widget-wrap" data-slider-settings='<?php echo wp_json_encode( $slider_settings ); ?>'>
 			<div class="swiper revora-featured-slider revora-featured-slider-<?php echo esc_attr( $widget_id ); ?>">
@@ -915,7 +1060,31 @@ class Revora_Featured_Review_Widget extends \Elementor\Widget_Base {
 							$initials = 'AR';
 						}
 
-						$subtitle = ! empty( $settings['default_subtitle'] ) ? $settings['default_subtitle'] : __( 'Verified Student', 'revora' );
+						$masked_contact = '';
+						$meta = ! empty( $review->id ) ? $db->get_review_meta( $review->id ) : array();
+						if ( ! empty( $meta ) && is_array( $meta ) ) {
+							foreach ( $meta as $k => $v ) {
+								$k_lower = strtolower( $k );
+								if ( ( false !== strpos( $k_lower, 'phone' ) || 'tel' === $k_lower || false !== strpos( $k_lower, 'contact' ) || false !== strpos( $k_lower, 'mobile' ) || 'number' === $k_lower ) && ! empty( $v ) && is_string( $v ) ) {
+									$masked_contact = trim( $v );
+									break;
+								}
+							}
+						}
+						if ( empty( $masked_contact ) && ! empty( $review->email ) ) {
+							$masked_contact = trim( $review->email );
+						}
+						if ( ! empty( $masked_contact ) ) {
+							$len = mb_strlen( $masked_contact );
+							if ( $len <= 6 ) {
+								$contact_masked = mb_substr( $masked_contact, 0, 1 ) . '******' . mb_substr( $masked_contact, -1 );
+							} else {
+								$contact_masked = mb_substr( $masked_contact, 0, 3 ) . '******' . mb_substr( $masked_contact, -3 );
+							}
+						} else {
+							$contact_masked = esc_html__( 'Verified Customer', 'revora' );
+						}
+						$subtitle = ! empty( $settings['default_subtitle'] ) && __( 'Verified Student', 'revora' ) !== $settings['default_subtitle'] ? $settings['default_subtitle'] : $contact_masked;
 					?>
 						<div class="swiper-slide">
 							<div class="revora-featured-card">
@@ -983,10 +1152,6 @@ class Revora_Featured_Review_Widget extends \Elementor\Widget_Base {
 				<?php if ( 'yes' === $settings['show_arrows'] && $is_multiple ) : ?>
 					<div class="swiper-button-prev"></div>
 					<div class="swiper-button-next"></div>
-				<?php endif; ?>
-
-				<?php if ( 'yes' === $settings['show_pagination'] && $is_multiple ) : ?>
-					<div class="swiper-pagination"></div>
 				<?php endif; ?>
 			</div>
 		</div>

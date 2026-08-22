@@ -70,36 +70,95 @@ class Revora_Shortcodes {
 			
 			<div class="revora-reviews-grid revora-grid-cols-<?php echo esc_attr( $atts['columns'] ); ?>">
 				
-				<?php foreach ( $reviews as $review ) : ?>
+				<?php foreach ( $reviews as $review ) : 
+					$db = new Revora_DB();
+					$avatar_url = ! empty( $review->id ) ? $db->get_review_meta( $review->id, 'avatar_url' ) : '';
+					if ( empty( $avatar_url ) && ! empty( $review->id ) ) {
+						$avatar_url = $db->get_review_meta( $review->id, 'avatar' );
+					}
+					$name_parts = explode( ' ', trim( $review->name ) );
+					$initials   = '';
+					if ( ! empty( $name_parts[0] ) ) {
+						$initials .= mb_strtoupper( mb_substr( $name_parts[0], 0, 1 ) );
+					}
+					if ( isset( $name_parts[1] ) && ! empty( $name_parts[1] ) ) {
+						$initials .= mb_strtoupper( mb_substr( $name_parts[1], 0, 1 ) );
+					}
+					if ( empty( $initials ) ) {
+						$initials = 'R';
+					}
+					$masked_contact = '';
+					$meta = ! empty( $review->id ) ? $db->get_review_meta( $review->id ) : array();
+					if ( ! empty( $meta ) && is_array( $meta ) ) {
+						foreach ( $meta as $k => $v ) {
+							$k_lower = strtolower( $k );
+							if ( ( false !== strpos( $k_lower, 'phone' ) || 'tel' === $k_lower || false !== strpos( $k_lower, 'contact' ) || false !== strpos( $k_lower, 'mobile' ) || 'number' === $k_lower ) && ! empty( $v ) && is_string( $v ) ) {
+								$masked_contact = trim( $v );
+								break;
+							}
+						}
+					}
+					if ( empty( $masked_contact ) && ! empty( $review->email ) ) {
+						$masked_contact = trim( $review->email );
+					}
+					if ( ! empty( $masked_contact ) ) {
+						$len = mb_strlen( $masked_contact );
+						if ( $len <= 6 ) {
+							$user_subtitle = mb_substr( $masked_contact, 0, 1 ) . '******' . mb_substr( $masked_contact, -1 );
+						} else {
+							$user_subtitle = mb_substr( $masked_contact, 0, 3 ) . '******' . mb_substr( $masked_contact, -3 );
+						}
+					} else {
+						$user_subtitle = esc_html__( 'Verified Customer', 'revora' );
+					}
+				?>
 					<div class="revora-review-card style-<?php echo esc_attr( $atts['card_style'] ); ?>">
 						<div class="revora-review-header">
-							<div class="revora-review-meta">
-								<span class="revora-review-author"><?php echo esc_html( $review->name ); ?></span>
-								<span class="revora-review-date"><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $review->created_at ) ) ); ?></span>
-							</div>
-							<?php if ( '1' === $settings['show_stars'] ) : ?>
-								<div class="revora-review-rating">
-									<?php for ( $i = 1; $i <= 5; $i++ ) : 
-										$r_val = floatval( $review->rating );
-										if ( $r_val >= $i ) {
-											$icon_text = 'star';
-											$icon_class = 'filled fill-1';
-										} elseif ( $r_val >= ( $i - 0.5 ) ) {
-											$icon_text = 'star_half';
-											$icon_class = 'filled fill-1';
-										} else {
-											$icon_text = 'star';
-											$icon_class = 'empty';
-										}
-									?>
-										<span class="material-symbols-outlined revora-star <?php echo esc_attr( $icon_class ); ?>"><?php echo esc_html( $icon_text ); ?></span>
-									<?php endfor; ?>
+							<div class="revora-review-author-wrap">
+								<div class="revora-review-avatar">
+									<?php if ( ! empty( $avatar_url ) ) : ?>
+										<img src="<?php echo esc_url( $avatar_url ); ?>" alt="<?php echo esc_attr( $review->name ); ?>" />
+									<?php else : ?>
+										<span class="revora-avatar-initials"><?php echo esc_html( $initials ); ?></span>
+									<?php endif; ?>
 								</div>
-							<?php endif; ?>
+								<div class="revora-review-meta">
+									<span class="revora-review-author"><?php echo esc_html( $review->name ); ?></span>
+									<span class="revora-review-subtitle"><?php echo esc_html( $user_subtitle ); ?></span>
+									<span class="revora-review-date"><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $review->created_at ) ) ); ?></span>
+								</div>
+							</div>
+							<div class="revora-review-header-right">
+								<?php if ( '1' === $settings['show_stars'] ) : ?>
+									<div class="revora-review-rating">
+										<?php for ( $i = 1; $i <= 5; $i++ ) : 
+											$r_val = floatval( $review->rating );
+											if ( $r_val >= $i ) {
+												$icon_text = 'star';
+												$icon_class = 'filled fill-1';
+											} elseif ( $r_val >= ( $i - 0.5 ) ) {
+												$icon_text = 'star_half';
+												$icon_class = 'filled fill-1';
+											} else {
+												$icon_text = 'star';
+												$icon_class = 'empty';
+											}
+										?>
+											<span class="material-symbols-outlined revora-star <?php echo esc_attr( $icon_class ); ?>"><?php echo esc_html( $icon_text ); ?></span>
+										<?php endfor; ?>
+									</div>
+								<?php endif; ?>
+							</div>
 						</div>
-						<h4 class="revora-review-title"><?php echo esc_html( $review->title ); ?></h4>
+						<?php if ( ! empty( $review->title ) ) : ?>
+							<h4 class="revora-review-title"><?php echo esc_html( $review->title ); ?></h4>
+						<?php endif; ?>
 						<div class="revora-review-content">
 							<?php echo wp_kses_post( wpautop( esc_html( $review->content ) ) ); ?>
+						</div>
+						<div class="revora-review-footer">
+							<span class="revora-footer-date"><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $review->created_at ) ) ); ?></span>
+							<span class="revora-footer-quote">”</span>
 						</div>
 					</div>
 				<?php endforeach; ?>
@@ -290,24 +349,25 @@ class Revora_Shortcodes {
 				height: 100% !important;
 				display: flex !important;
 				align-items: stretch !important;
-				border: 1px solid #d1d5db !important;
-				border-radius: 4px !important;
-				background: #ffffff !important;
+				border: 1px solid #d1d5db;
+				border-radius: 4px;
+				background: #ffffff;
 				box-sizing: border-box !important;
 				z-index: 1 !important;
 				overflow: hidden !important;
+				padding: 0 !important;
 			}
 			.{$widget_id} .revora-custom-file-wrap input[type=\"file\"]:focus + .revora-file-fake {
-				border-color: var(--revora-primary, #2563eb) !important;
-				box-shadow: 0 0 0 3.5px rgba(37, 99, 235, 0.12) !important;
+				border-color: var(--revora-primary, #2563eb);
+				box-shadow: 0 0 0 3.5px rgba(37, 99, 235, 0.12);
 			}
 			.{$widget_id} .revora-file-text {
 				flex: 1 !important;
 				padding: 0 16px !important;
 				line-height: 44px !important;
-				color: #1f2937 !important;
-				font-size: 15px !important;
-				font-family: inherit !important;
+				color: #1f2937;
+				font-size: 15px;
+				font-family: inherit;
 				white-space: nowrap !important;
 				overflow: hidden !important;
 				text-overflow: ellipsis !important;
@@ -321,6 +381,31 @@ class Revora_Shortcodes {
 				font-weight: 500 !important;
 				font-size: 15px !important;
 				font-family: inherit !important;
+			}
+			.{$widget_id} .revora-frontend-stars {
+				display: flex !important;
+				gap: 8px !important;
+				align-items: center !important;
+			}
+			.{$widget_id} .revora-star-btn {
+				display: inline-flex !important;
+				align-items: center !important;
+				justify-content: center !important;
+				width: 52px !important;
+				height: 52px !important;
+				border: 1.5px solid #e2e8f0 !important;
+				border-radius: 10px !important;
+				background: #ffffff !important;
+				color: #cbd5e1 !important;
+				font-size: 18px !important;
+				transition: all 0.2s ease !important;
+				box-sizing: border-box !important;
+				padding: 0 !important;
+			}
+			.{$widget_id} .revora-star-btn.active {
+				border-color: var(--revora-star-filled, #fbbf24) !important;
+				color: var(--revora-star-filled, #fbbf24) !important;
+				background: #fffdf5 !important;
 			}
 		";
 		echo '<style type="text/css">' . $custom_css . '</style>';

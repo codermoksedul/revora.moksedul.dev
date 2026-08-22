@@ -152,7 +152,7 @@ class Revora_Admin {
 			? ( sanitize_hex_color( $input['star_color'] ) ?? '#f59e0b' )
 			: '#f59e0b';
 
-		$allowed_card_styles = array( 'classic', 'modern', 'boxed', 'horizontal', 'testimonial' );
+		$allowed_card_styles = array( 'classic', 'verified', 'modern', 'boxed', 'horizontal', 'testimonial' );
 		$sanitized['card_style'] = isset( $input['card_style'] ) && in_array( $input['card_style'], $allowed_card_styles, true )
 			? $input['card_style']
 			: 'classic';
@@ -1884,6 +1884,7 @@ class Revora_Admin {
 										<label class="revora-field-label" for="revora_card_style"><?php esc_html_e( 'Default Review Card Style', 'revora' ); ?></label>
 										<select name="revora_settings[card_style]" id="revora_card_style" class="widefat" style="max-width:320px;">
 											<option value="classic" <?php selected( $settings['card_style'], 'classic' ); ?>><?php esc_html_e( 'Classic (Clean & Minimal)', 'revora' ); ?></option>
+											<option value="verified" <?php selected( $settings['card_style'], 'verified' ); ?>><?php esc_html_e( 'Verified Badge / Student (Modern Showcase)', 'revora' ); ?></option>
 											<option value="modern" <?php selected( $settings['card_style'], 'modern' ); ?>><?php esc_html_e( 'Modern (Soft Shadow & Accent Line)', 'revora' ); ?></option>
 											<option value="boxed" <?php selected( $settings['card_style'], 'boxed' ); ?>><?php esc_html_e( 'Boxed (Card with Light Gray Border)', 'revora' ); ?></option>
 											<option value="horizontal" <?php selected( $settings['card_style'], 'horizontal' ); ?>><?php esc_html_e( 'Horizontal (Wide Side-by-Side)', 'revora' ); ?></option>

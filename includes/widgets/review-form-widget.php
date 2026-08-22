@@ -224,7 +224,7 @@ class Revora_Review_Form_Widget extends \Elementor\Widget_Base {
 			\Elementor\Group_Control_Typography::get_type(),
 			array(
 				'name'     => 'input_typography',
-				'selector' => '{{WRAPPER}} .revora-form-field input, {{WRAPPER}} .revora-form-field textarea, {{WRAPPER}} .revora-form-field select',
+				'selector' => '{{WRAPPER}} .revora-form-field input, {{WRAPPER}} .revora-form-field textarea, {{WRAPPER}} .revora-form-field select, {{WRAPPER}} .revora-form-field .revora-file-fake',
 			)
 		);
 
@@ -243,7 +243,7 @@ class Revora_Review_Form_Widget extends \Elementor\Widget_Base {
 				'label'     => __( 'Text Color', 'revora' ),
 				'type'      => \Elementor\Controls_Manager::COLOR,
 				'selectors' => array(
-					'{{WRAPPER}} .revora-form-field input, {{WRAPPER}} .revora-form-field textarea, {{WRAPPER}} .revora-form-field select' => 'color: {{VALUE}} !important;',
+					'{{WRAPPER}} .revora-form-field input, {{WRAPPER}} .revora-form-field textarea, {{WRAPPER}} .revora-form-field select, {{WRAPPER}} .revora-form-field .revora-file-fake' => 'color: {{VALUE}} !important;',
 				),
 			)
 		);
@@ -254,7 +254,7 @@ class Revora_Review_Form_Widget extends \Elementor\Widget_Base {
 				'label'     => __( 'Background Color', 'revora' ),
 				'type'      => \Elementor\Controls_Manager::COLOR,
 				'selectors' => array(
-					'{{WRAPPER}} .revora-form-field input, {{WRAPPER}} .revora-form-field textarea, {{WRAPPER}} .revora-form-field select' => 'background-color: {{VALUE}} !important;',
+					'{{WRAPPER}} .revora-form-field input, {{WRAPPER}} .revora-form-field textarea, {{WRAPPER}} .revora-form-field select, {{WRAPPER}} .revora-form-field .revora-file-fake' => 'background-color: {{VALUE}} !important;',
 				),
 			)
 		);
@@ -263,7 +263,7 @@ class Revora_Review_Form_Widget extends \Elementor\Widget_Base {
 			\Elementor\Group_Control_Border::get_type(),
 			array(
 				'name'     => 'input_border',
-				'selector' => '{{WRAPPER}} .revora-form-field input, {{WRAPPER}} .revora-form-field textarea, {{WRAPPER}} .revora-form-field select',
+				'selector' => '{{WRAPPER}} .revora-form-field input, {{WRAPPER}} .revora-form-field textarea, {{WRAPPER}} .revora-form-field select, {{WRAPPER}} .revora-form-field .revora-file-fake',
 			)
 		);
 
@@ -282,7 +282,7 @@ class Revora_Review_Form_Widget extends \Elementor\Widget_Base {
 				'label'     => __( 'Border Color', 'revora' ),
 				'type'      => \Elementor\Controls_Manager::COLOR,
 				'selectors' => array(
-					'{{WRAPPER}} .revora-form-field input:focus, {{WRAPPER}} .revora-form-field textarea:focus, {{WRAPPER}} .revora-form-field select:focus' => 'border-color: {{VALUE}} !important;',
+					'{{WRAPPER}} .revora-form-field input:focus, {{WRAPPER}} .revora-form-field textarea:focus, {{WRAPPER}} .revora-form-field select:focus, {{WRAPPER}} .revora-form-field input[type="file"]:focus + .revora-file-fake' => 'border-color: {{VALUE}} !important;',
 				),
 			)
 		);
@@ -298,7 +298,7 @@ class Revora_Review_Form_Widget extends \Elementor\Widget_Base {
 				'type'       => \Elementor\Controls_Manager::DIMENSIONS,
 				'size_units' => array( 'px', '%' ),
 				'selectors'  => array(
-					'{{WRAPPER}} .revora-form-field input, {{WRAPPER}} .revora-form-field textarea, {{WRAPPER}} .revora-form-field select' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}} !important;',
+					'{{WRAPPER}} .revora-form-field input, {{WRAPPER}} .revora-form-field textarea, {{WRAPPER}} .revora-form-field select, {{WRAPPER}} .revora-form-field .revora-file-fake' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}} !important;',
 				),
 				'separator'  => 'before',
 			)
@@ -704,3 +704,4 @@ class Revora_Review_Form_Widget extends \Elementor\Widget_Base {
 		echo do_shortcode( '[revora_form id="' . esc_attr( $form_id ) . '" category="' . esc_attr( $category ) . '"]' );
 	}
 }
+

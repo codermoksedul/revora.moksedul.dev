@@ -3,7 +3,7 @@
  * Plugin Name: Revora
  * Plugin URI:  https://revora.moksedul.dev
  * Description: Smart Category-Based Review System for WordPress. Lightweight, custom DB, and AJAX-powered.
- * Version:     1.9.2
+ * Version:     1.9.8
  * Author:      Moksedul Islam
  * Author URI:  https://moksedul.dev
  * License:     GPLv2
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define Constants
-define( 'REVORA_VERSION', time() );
+define( 'REVORA_VERSION', '1.9.8' );
 define( 'REVORA_PATH', plugin_dir_path( __FILE__ ) );
 define( 'REVORA_URL', plugin_dir_url( __FILE__ ) );
 define( 'REVORA_INC', REVORA_PATH . 'includes/' );

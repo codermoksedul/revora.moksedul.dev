@@ -94,6 +94,7 @@ class Revora_Reviews_Slider_Widget extends \Elementor\Widget_Base {
 				'type'    => \Elementor\Controls_Manager::SELECT,
 				'options' => array(
 					'classic'      => __( 'Classic', 'revora' ),
+					'verified'     => __( 'Verified / Student Badge', 'revora' ),
 					'modern'       => __( 'Modern', 'revora' ),
 					'boxed'        => __( 'Boxed', 'revora' ),
 					'horizontal'   => __( 'Horizontal', 'revora' ),
@@ -919,31 +920,99 @@ class Revora_Reviews_Slider_Widget extends \Elementor\Widget_Base {
 			<div class="revora-slider-container <?php echo esc_attr( $settings['arrow_position'] ); ?>-arrows">
 				<div class="swiper revora-reviews-slider revora-slider-<?php echo esc_attr( $widget_id ); ?>">
 					<div class="swiper-wrapper">
-						<?php foreach ( $reviews as $review ) : ?>
+						<?php foreach ( $reviews as $review ) : 
+							$avatar_url = ! empty( $review->id ) ? $db->get_review_meta( $review->id, 'avatar_url' ) : '';
+							if ( empty( $avatar_url ) && ! empty( $review->id ) ) {
+								$avatar_url = $db->get_review_meta( $review->id, 'avatar' );
+							}
+							$name_parts = explode( ' ', trim( $review->name ) );
+							$initials   = '';
+							if ( ! empty( $name_parts[0] ) ) {
+								$initials .= mb_strtoupper( mb_substr( $name_parts[0], 0, 1 ) );
+							}
+							if ( isset( $name_parts[1] ) && ! empty( $name_parts[1] ) ) {
+								$initials .= mb_strtoupper( mb_substr( $name_parts[1], 0, 1 ) );
+							}
+							if ( empty( $initials ) ) {
+								$initials = 'R';
+							}
+							$masked_contact = '';
+							$meta = ! empty( $review->id ) ? $db->get_review_meta( $review->id ) : array();
+							if ( ! empty( $meta ) && is_array( $meta ) ) {
+								foreach ( $meta as $k => $v ) {
+									$k_lower = strtolower( $k );
+									if ( ( false !== strpos( $k_lower, 'phone' ) || 'tel' === $k_lower || false !== strpos( $k_lower, 'contact' ) || false !== strpos( $k_lower, 'mobile' ) || 'number' === $k_lower ) && ! empty( $v ) && is_string( $v ) ) {
+										$masked_contact = trim( $v );
+										break;
+									}
+								}
+							}
+							if ( empty( $masked_contact ) && ! empty( $review->email ) ) {
+								$masked_contact = trim( $review->email );
+							}
+							if ( ! empty( $masked_contact ) ) {
+								$len = mb_strlen( $masked_contact );
+								if ( $len <= 6 ) {
+									$user_subtitle = mb_substr( $masked_contact, 0, 1 ) . '******' . mb_substr( $masked_contact, -1 );
+								} else {
+									$user_subtitle = mb_substr( $masked_contact, 0, 3 ) . '******' . mb_substr( $masked_contact, -3 );
+								}
+							} else {
+								$user_subtitle = esc_html__( 'Verified Customer', 'revora' );
+							}
+						?>
 							<div class="swiper-slide">
 								<div class="revora-review-card style-<?php echo esc_attr( $settings['card_style'] ); ?>">
 									<div class="revora-review-header">
-										<div class="revora-review-meta">
-											<?php if ( 'yes' === $settings['show_author'] ) : ?>
-												<span class="revora-review-author"><?php echo esc_html( $review->name ); ?></span>
-											<?php endif; ?>
-											<?php if ( 'yes' === $settings['show_date'] ) : ?>
-												<span class="revora-review-date"><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $review->created_at ) ) ); ?></span>
+										<div class="revora-review-author-wrap">
+											<div class="revora-review-avatar">
+												<?php if ( ! empty( $avatar_url ) ) : ?>
+													<img src="<?php echo esc_url( $avatar_url ); ?>" alt="<?php echo esc_attr( $review->name ); ?>" />
+												<?php else : ?>
+													<span class="revora-avatar-initials"><?php echo esc_html( $initials ); ?></span>
+												<?php endif; ?>
+											</div>
+											<div class="revora-review-meta">
+												<?php if ( 'yes' === $settings['show_author'] ) : ?>
+													<span class="revora-review-author"><?php echo esc_html( $review->name ); ?></span>
+												<?php endif; ?>
+												<span class="revora-review-subtitle"><?php echo esc_html( $user_subtitle ); ?></span>
+												<?php if ( 'yes' === $settings['show_date'] ) : ?>
+													<span class="revora-review-date"><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $review->created_at ) ) ); ?></span>
+												<?php endif; ?>
+											</div>
+										</div>
+										<div class="revora-review-header-right">
+											<?php if ( 'yes' === $settings['show_rating'] && '1' === $plugin_settings['show_stars'] ) : ?>
+												<div class="revora-review-rating">
+													<?php for ( $i = 1; $i <= 5; $i++ ) : 
+														$r_val = floatval( $review->rating );
+														if ( $r_val >= $i ) {
+															$icon_text = 'star';
+															$icon_class = 'filled fill-1';
+														} elseif ( $r_val >= ( $i - 0.5 ) ) {
+															$icon_text = 'star_half';
+															$icon_class = 'filled fill-1';
+														} else {
+															$icon_text = 'star';
+															$icon_class = 'empty';
+														}
+													?>
+														<span class="material-symbols-outlined revora-star <?php echo esc_attr( $icon_class ); ?>"><?php echo esc_html( $icon_text ); ?></span>
+													<?php endfor; ?>
+												</div>
 											<?php endif; ?>
 										</div>
-										<?php if ( 'yes' === $settings['show_rating'] && '1' === $plugin_settings['show_stars'] ) : ?>
-											<div class="revora-review-rating">
-												<?php for ( $i = 1; $i <= 5; $i++ ) : ?>
-													<span class="dashicons dashicons-star-filled <?php echo esc_attr( $i <= $review->rating ? 'filled' : 'empty' ); ?>"></span>
-												<?php endfor; ?>
-											</div>
-										<?php endif; ?>
 									</div>
-									<?php if ( 'yes' === $settings['show_title'] ) : ?>
+									<?php if ( 'yes' === $settings['show_title'] && ! empty( $review->title ) ) : ?>
 										<h4 class="revora-review-title"><?php echo esc_html( $review->title ); ?></h4>
 									<?php endif; ?>
 									<div class="revora-review-content">
 										<?php echo wp_kses_post( wpautop( esc_html( $review->content ) ) ); ?>
+									</div>
+									<div class="revora-review-footer">
+										<span class="revora-footer-date"><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $review->created_at ) ) ); ?></span>
+										<span class="revora-footer-quote">”</span>
 									</div>
 								</div>
 							</div>

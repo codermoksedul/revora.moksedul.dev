@@ -85,6 +85,7 @@ class Revora_Reviews_Display_Widget extends \Elementor\Widget_Base {
 				'type'    => \Elementor\Controls_Manager::SELECT,
 				'options' => array(
 					'classic'      => __( 'Classic', 'revora' ),
+					'verified'     => __( 'Verified / Student Badge', 'revora' ),
 					'modern'       => __( 'Modern', 'revora' ),
 					'boxed'        => __( 'Boxed', 'revora' ),
 					'horizontal'   => __( 'Horizontal', 'revora' ),
