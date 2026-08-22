@@ -30,6 +30,31 @@ class Revora_Elementor {
 	public function __construct() {
 		add_action( 'elementor/widgets/register', array( $this, 'register_widgets' ) );
 		add_action( 'elementor/elements/categories_registered', array( $this, 'add_elementor_category' ) );
+		add_action( 'elementor/frontend/after_enqueue_styles', array( $this, 'enqueue_elementor_styles' ) );
+		add_action( 'elementor/preview/enqueue_styles', array( $this, 'enqueue_elementor_styles' ) );
+		add_action( 'elementor/editor/after_enqueue_styles', array( $this, 'enqueue_elementor_styles' ) );
+		add_action( 'elementor/editor/after_enqueue_scripts', array( $this, 'enqueue_elementor_scripts' ) );
+	}
+
+	/**
+	 * Enqueue Styles for Elementor (Frontend & Editor Preview)
+	 */
+	public function enqueue_elementor_styles() {
+		wp_enqueue_style( 'revora-google-material-symbols', 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200', array(), null );
+		wp_enqueue_style( 'dashicons' );
+		wp_enqueue_style( 'revora-frontend', REVORA_URL . 'assets/css/revora-frontend.css', array( 'dashicons', 'revora-google-material-symbols' ), REVORA_VERSION );
+		wp_enqueue_style( 'revora-card-variants', REVORA_URL . 'assets/css/revora-card-variants.css', array(), REVORA_VERSION );
+	}
+
+	/**
+	 * Enqueue Scripts for Elementor Editor Preview
+	 */
+	public function enqueue_elementor_scripts() {
+		wp_enqueue_script( 'revora-frontend', REVORA_URL . 'assets/js/revora-frontend.js', array( 'jquery' ), REVORA_VERSION, true );
+		wp_localize_script( 'revora-frontend', 'revora_vars', array(
+			'ajax_url' => admin_url( 'admin-ajax.php' ),
+			'nonce'    => wp_create_nonce( 'revora_nonce' ),
+		) );
 	}
 
 	/**
@@ -60,11 +85,13 @@ class Revora_Elementor {
 		require_once REVORA_PATH . 'includes/widgets/review-form-widget.php';
 		require_once REVORA_PATH . 'includes/widgets/reviews-display-widget.php';
 		require_once REVORA_PATH . 'includes/widgets/reviews-slider-widget.php';
+		require_once REVORA_PATH . 'includes/widgets/featured-review-widget.php';
 
 		// Register widgets
 		$widgets_manager->register( new \Revora_Review_Form_Widget() );
 		$widgets_manager->register( new \Revora_Reviews_Display_Widget() );
 		$widgets_manager->register( new \Revora_Reviews_Slider_Widget() );
+		$widgets_manager->register( new \Revora_Featured_Review_Widget() );
 	}
 }
 

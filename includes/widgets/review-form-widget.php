@@ -40,40 +40,23 @@ class Revora_Review_Form_Widget extends \Elementor\Widget_Base {
 		);
 
 		$db = new Revora_DB();
-		$categories = $db->get_categories();
-		$category_options = array( '' => __( 'Select Category', 'revora' ) );
-		foreach ( $categories as $cat ) {
-			$category_options[ $cat->slug ] = $cat->name;
+		$forms = $db->get_forms();
+		$form_options = array();
+		if ( empty( $forms ) ) {
+			$form_options['0'] = __( 'Default Form', 'revora' );
+		} else {
+			foreach ( $forms as $form ) {
+				$form_options[ $form->id ] = $form->name;
+			}
 		}
 
 		$this->add_control(
-			'category',
+			'form_id',
 			array(
-				'label'   => __( 'Category', 'revora' ),
+				'label'   => __( 'Select Form', 'revora' ),
 				'type'    => \Elementor\Controls_Manager::SELECT,
-				'options' => $category_options,
-				'default' => '',
-			)
-		);
-
-		$this->add_control(
-			'form_title',
-			array(
-				'label'   => __( 'Form Title', 'revora' ),
-				'type'    => \Elementor\Controls_Manager::TEXT,
-				'default' => __( 'Submit a Review', 'revora' ),
-			)
-		);
-
-		$this->add_control(
-			'show_title',
-			array(
-				'label'        => __( 'Show Title', 'revora' ),
-				'type'         => \Elementor\Controls_Manager::SWITCHER,
-				'label_on'     => __( 'Show', 'revora' ),
-				'label_off'    => __( 'Hide', 'revora' ),
-				'return_value' => 'yes',
-				'default'      => 'yes',
+				'options' => $form_options,
+				'default' => ! empty( $forms ) ? strval( $forms[0]->id ) : '0',
 			)
 		);
 
@@ -146,14 +129,26 @@ class Revora_Review_Form_Widget extends \Elementor\Widget_Base {
 			)
 		);
 
-		$this->add_control(
+		$this->add_responsive_control(
+			'container_margin',
+			array(
+				'label'      => __( 'Margin', 'revora' ),
+				'type'       => \Elementor\Controls_Manager::DIMENSIONS,
+				'size_units' => array( 'px', '%', 'em' ),
+				'selectors'  => array(
+					'{{WRAPPER}} .revora-form-container' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}} !important;',
+				),
+			)
+		);
+
+		$this->add_responsive_control(
 			'container_padding',
 			array(
 				'label'      => __( 'Padding', 'revora' ),
 				'type'       => \Elementor\Controls_Manager::DIMENSIONS,
 				'size_units' => array( 'px', '%', 'em' ),
 				'selectors'  => array(
-					'{{WRAPPER}} .revora-form-container' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+					'{{WRAPPER}} .revora-form-container' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}} !important;',
 				),
 			)
 		);
@@ -163,82 +158,6 @@ class Revora_Review_Form_Widget extends \Elementor\Widget_Base {
 			array(
 				'name'     => 'container_box_shadow',
 				'selector' => '{{WRAPPER}} .revora-form-container',
-			)
-		);
-
-		$this->end_controls_section();
-
-		// Style Tab - Title
-		$this->start_controls_section(
-			'style_title',
-			array(
-				'label'     => __( 'Form Title', 'revora' ),
-				'tab'       => \Elementor\Controls_Manager::TAB_STYLE,
-				'condition' => array(
-					'show_title' => 'yes',
-				),
-			)
-		);
-
-		$this->add_group_control(
-			\Elementor\Group_Control_Typography::get_type(),
-			array(
-				'name'     => 'title_typography',
-				'selector' => '{{WRAPPER}} .revora-form-container h3',
-			)
-		);
-
-		$this->add_control(
-			'title_color',
-			array(
-				'label'     => __( 'Color', 'revora' ),
-				'type'      => \Elementor\Controls_Manager::COLOR,
-				'selectors' => array(
-					'{{WRAPPER}} .revora-form-container h3' => 'color: {{VALUE}};',
-				),
-			)
-		);
-
-		$this->add_responsive_control(
-			'title_align',
-			array(
-				'label'     => __( 'Alignment', 'revora' ),
-				'type'      => \Elementor\Controls_Manager::CHOOSE,
-				'options'   => array(
-					'left'   => array(
-						'title' => __( 'Left', 'revora' ),
-						'icon'  => 'eicon-text-align-left',
-					),
-					'center' => array(
-						'title' => __( 'Center', 'revora' ),
-						'icon'  => 'eicon-text-align-center',
-					),
-					'right'  => array(
-						'title' => __( 'Right', 'revora' ),
-						'icon'  => 'eicon-text-align-right',
-					),
-				),
-				'selectors' => array(
-					'{{WRAPPER}} .revora-form-container h3' => 'text-align: {{VALUE}};',
-				),
-			)
-		);
-
-		$this->add_control(
-			'title_spacing',
-			array(
-				'label'      => __( 'Spacing', 'revora' ),
-				'type'       => \Elementor\Controls_Manager::SLIDER,
-				'size_units' => array( 'px' ),
-				'range'      => array(
-					'px' => array(
-						'min' => 0,
-						'max' => 100,
-					),
-				),
-				'selectors'  => array(
-					'{{WRAPPER}} .revora-form-container h3' => 'margin-bottom: {{SIZE}}{{UNIT}};',
-				),
 			)
 		);
 
@@ -257,7 +176,7 @@ class Revora_Review_Form_Widget extends \Elementor\Widget_Base {
 			\Elementor\Group_Control_Typography::get_type(),
 			array(
 				'name'     => 'label_typography',
-				'selector' => '{{WRAPPER}} .revora-form-field label',
+				'selector' => '{{WRAPPER}} .revora-form-field label, {{WRAPPER}} .revora-form-field label.revora-field-label',
 			)
 		);
 
@@ -267,7 +186,7 @@ class Revora_Review_Form_Widget extends \Elementor\Widget_Base {
 				'label'     => __( 'Color', 'revora' ),
 				'type'      => \Elementor\Controls_Manager::COLOR,
 				'selectors' => array(
-					'{{WRAPPER}} .revora-form-field label' => 'color: {{VALUE}};',
+					'{{WRAPPER}} .revora-form-field label, {{WRAPPER}} .revora-form-field label.revora-field-label' => 'color: {{VALUE}} !important;',
 				),
 			)
 		);
@@ -285,7 +204,7 @@ class Revora_Review_Form_Widget extends \Elementor\Widget_Base {
 					),
 				),
 				'selectors'  => array(
-					'{{WRAPPER}} .revora-form-field label' => 'margin-bottom: {{SIZE}}{{UNIT}};',
+					'{{WRAPPER}} .revora-form-field label, {{WRAPPER}} .revora-form-field label.revora-field-label' => 'margin-bottom: {{SIZE}}{{UNIT}} !important;',
 				),
 			)
 		);
@@ -324,7 +243,7 @@ class Revora_Review_Form_Widget extends \Elementor\Widget_Base {
 				'label'     => __( 'Text Color', 'revora' ),
 				'type'      => \Elementor\Controls_Manager::COLOR,
 				'selectors' => array(
-					'{{WRAPPER}} .revora-form-field input, {{WRAPPER}} .revora-form-field textarea, {{WRAPPER}} .revora-form-field select' => 'color: {{VALUE}};',
+					'{{WRAPPER}} .revora-form-field input, {{WRAPPER}} .revora-form-field textarea, {{WRAPPER}} .revora-form-field select' => 'color: {{VALUE}} !important;',
 				),
 			)
 		);
@@ -335,7 +254,7 @@ class Revora_Review_Form_Widget extends \Elementor\Widget_Base {
 				'label'     => __( 'Background Color', 'revora' ),
 				'type'      => \Elementor\Controls_Manager::COLOR,
 				'selectors' => array(
-					'{{WRAPPER}} .revora-form-field input, {{WRAPPER}} .revora-form-field textarea, {{WRAPPER}} .revora-form-field select' => 'background-color: {{VALUE}};',
+					'{{WRAPPER}} .revora-form-field input, {{WRAPPER}} .revora-form-field textarea, {{WRAPPER}} .revora-form-field select' => 'background-color: {{VALUE}} !important;',
 				),
 			)
 		);
@@ -363,7 +282,7 @@ class Revora_Review_Form_Widget extends \Elementor\Widget_Base {
 				'label'     => __( 'Border Color', 'revora' ),
 				'type'      => \Elementor\Controls_Manager::COLOR,
 				'selectors' => array(
-					'{{WRAPPER}} .revora-form-field input:focus, {{WRAPPER}} .revora-form-field textarea:focus, {{WRAPPER}} .revora-form-field select:focus' => 'border-color: {{VALUE}};',
+					'{{WRAPPER}} .revora-form-field input:focus, {{WRAPPER}} .revora-form-field textarea:focus, {{WRAPPER}} .revora-form-field select:focus' => 'border-color: {{VALUE}} !important;',
 				),
 			)
 		);
@@ -379,7 +298,7 @@ class Revora_Review_Form_Widget extends \Elementor\Widget_Base {
 				'type'       => \Elementor\Controls_Manager::DIMENSIONS,
 				'size_units' => array( 'px', '%' ),
 				'selectors'  => array(
-					'{{WRAPPER}} .revora-form-field input, {{WRAPPER}} .revora-form-field textarea, {{WRAPPER}} .revora-form-field select' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+					'{{WRAPPER}} .revora-form-field input, {{WRAPPER}} .revora-form-field textarea, {{WRAPPER}} .revora-form-field select' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}} !important;',
 				),
 				'separator'  => 'before',
 			)
@@ -392,7 +311,7 @@ class Revora_Review_Form_Widget extends \Elementor\Widget_Base {
 				'type'       => \Elementor\Controls_Manager::DIMENSIONS,
 				'size_units' => array( 'px', '%', 'em' ),
 				'selectors'  => array(
-					'{{WRAPPER}} .revora-form-field input, {{WRAPPER}} .revora-form-field textarea, {{WRAPPER}} .revora-form-field select' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+					'{{WRAPPER}} .revora-form-field input:not([type="file"]), {{WRAPPER}} .revora-form-field textarea, {{WRAPPER}} .revora-form-field select' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}} !important;',
 				),
 			)
 		);
@@ -403,7 +322,79 @@ class Revora_Review_Form_Widget extends \Elementor\Widget_Base {
 				'label'     => __( 'Placeholder Color', 'revora' ),
 				'type'      => \Elementor\Controls_Manager::COLOR,
 				'selectors' => array(
-					'{{WRAPPER}} .revora-form-field input::placeholder, {{WRAPPER}} .revora-form-field textarea::placeholder' => 'color: {{VALUE}};',
+					'{{WRAPPER}} .revora-form-field input::placeholder, {{WRAPPER}} .revora-form-field textarea::placeholder' => 'color: {{VALUE}} !important;',
+				),
+			)
+		);
+
+		$this->add_responsive_control(
+			'input_height',
+			array(
+				'label'      => __( 'Inputs Height', 'revora' ),
+				'type'       => \Elementor\Controls_Manager::SLIDER,
+				'size_units' => array( 'px' ),
+				'range'      => array(
+					'px' => array(
+						'min' => 30,
+						'max' => 90,
+					),
+				),
+				'selectors'  => array(
+					'{{WRAPPER}} .revora-form-field input:not([type="submit"]):not([type="checkbox"]):not([type="radio"]), {{WRAPPER}} .revora-form-field select' => 'height: {{SIZE}}{{UNIT}} !important; line-height: {{SIZE}}{{UNIT}} !important;',
+				),
+			)
+		);
+
+		$this->add_responsive_control(
+			'textarea_height',
+			array(
+				'label'      => __( 'Textarea Height', 'revora' ),
+				'type'       => \Elementor\Controls_Manager::SLIDER,
+				'size_units' => array( 'px' ),
+				'range'      => array(
+					'px' => array(
+						'min' => 60,
+						'max' => 400,
+					),
+				),
+				'selectors'  => array(
+					'{{WRAPPER}} .revora-form-field textarea' => 'min-height: {{SIZE}}{{UNIT}} !important; height: {{SIZE}}{{UNIT}} !important;',
+				),
+			)
+		);
+
+		$this->add_responsive_control(
+			'field_row_gap',
+			array(
+				'label'      => __( 'Fields Bottom Spacing (Row Gap)', 'revora' ),
+				'type'       => \Elementor\Controls_Manager::SLIDER,
+				'size_units' => array( 'px' ),
+				'range'      => array(
+					'px' => array(
+						'min' => 0,
+						'max' => 60,
+					),
+				),
+				'selectors'  => array(
+					'{{WRAPPER}} .revora-form-field, {{WRAPPER}} .revora-form-col .revora-form-field' => 'margin-bottom: {{SIZE}}{{UNIT}} !important;',
+				),
+			)
+		);
+
+		$this->add_responsive_control(
+			'field_column_gap',
+			array(
+				'label'      => __( 'Columns Gap (2-Col Spacing)', 'revora' ),
+				'type'       => \Elementor\Controls_Manager::SLIDER,
+				'size_units' => array( 'px' ),
+				'range'      => array(
+					'px' => array(
+						'min' => 0,
+						'max' => 60,
+					),
+				),
+				'selectors'  => array(
+					'{{WRAPPER}} .revora-form-row' => 'gap: {{SIZE}}{{UNIT}} !important;',
 				),
 			)
 		);
@@ -432,7 +423,7 @@ class Revora_Review_Form_Widget extends \Elementor\Widget_Base {
 					),
 				),
 				'selectors'  => array(
-					'{{WRAPPER}} .revora-rating-input label svg' => 'width: {{SIZE}}{{UNIT}}; height: {{SIZE}}{{UNIT}};',
+					'{{WRAPPER}} .revora-frontend-stars .revora-star-btn, {{WRAPPER}} .revora-rating-input label svg' => 'font-size: {{SIZE}}{{UNIT}} !important; width: {{SIZE}}{{UNIT}} !important; height: {{SIZE}}{{UNIT}} !important; line-height: {{SIZE}}{{UNIT}} !important;',
 				),
 			)
 		);
@@ -443,7 +434,7 @@ class Revora_Review_Form_Widget extends \Elementor\Widget_Base {
 				'label'     => __( 'Empty Color', 'revora' ),
 				'type'      => \Elementor\Controls_Manager::COLOR,
 				'selectors' => array(
-					'{{WRAPPER}} .revora-rating-input label svg' => 'fill: {{VALUE}};',
+					'{{WRAPPER}} .revora-frontend-stars .revora-star-btn, {{WRAPPER}} .revora-rating-input label svg' => 'color: {{VALUE}} !important; fill: {{VALUE}} !important;',
 				),
 			)
 		);
@@ -454,7 +445,7 @@ class Revora_Review_Form_Widget extends \Elementor\Widget_Base {
 				'label'     => __( 'Filled Color', 'revora' ),
 				'type'      => \Elementor\Controls_Manager::COLOR,
 				'selectors' => array(
-					'{{WRAPPER}} .revora-rating-input label:hover svg, {{WRAPPER}} .revora-rating-input label:hover ~ label svg, {{WRAPPER}} .revora-rating-input input[type="radio"]:checked ~ label svg' => 'fill: {{VALUE}};',
+					'{{WRAPPER}} .revora-frontend-stars .revora-star-btn.active, {{WRAPPER}} .revora-frontend-stars .revora-star-btn.fill-1, {{WRAPPER}} .revora-rating-input label:hover svg, {{WRAPPER}} .revora-rating-input label:hover ~ label svg, {{WRAPPER}} .revora-rating-input input[type="radio"]:checked ~ label svg' => 'color: {{VALUE}} !important; fill: {{VALUE}} !important;',
 				),
 			)
 		);
@@ -468,11 +459,44 @@ class Revora_Review_Form_Widget extends \Elementor\Widget_Base {
 				'range'      => array(
 					'px' => array(
 						'min' => 0,
-						'max' => 20,
+						'max' => 30,
 					),
 				),
 				'selectors'  => array(
-					'{{WRAPPER}} .revora-rating-input' => 'gap: {{SIZE}}{{UNIT}};',
+					'{{WRAPPER}} .revora-frontend-stars, {{WRAPPER}} .revora-rating-input' => 'gap: {{SIZE}}{{UNIT}} !important;',
+				),
+			)
+		);
+
+		$this->add_control(
+			'star_box_bg',
+			array(
+				'label'     => __( 'Rating Box Background', 'revora' ),
+				'type'      => \Elementor\Controls_Manager::COLOR,
+				'selectors' => array(
+					'{{WRAPPER}} .revora-frontend-rating-picker' => 'background-color: {{VALUE}} !important;',
+				),
+			)
+		);
+
+		$this->add_control(
+			'star_badge_color',
+			array(
+				'label'     => __( 'Score Badge Text Color', 'revora' ),
+				'type'      => \Elementor\Controls_Manager::COLOR,
+				'selectors' => array(
+					'{{WRAPPER}} .revora-rating-score-badge' => 'color: {{VALUE}} !important;',
+				),
+			)
+		);
+
+		$this->add_control(
+			'star_badge_bg',
+			array(
+				'label'     => __( 'Score Badge Background', 'revora' ),
+				'type'      => \Elementor\Controls_Manager::COLOR,
+				'selectors' => array(
+					'{{WRAPPER}} .revora-rating-score-badge' => 'background-color: {{VALUE}} !important;',
 				),
 			)
 		);
@@ -599,14 +623,27 @@ class Revora_Review_Form_Widget extends \Elementor\Widget_Base {
 			)
 		);
 
-		$this->add_control(
+		$this->add_responsive_control(
+			'button_margin',
+			array(
+				'label'      => __( 'Margin', 'revora' ),
+				'type'       => \Elementor\Controls_Manager::DIMENSIONS,
+				'size_units' => array( 'px', '%', 'em' ),
+				'selectors'  => array(
+					'{{WRAPPER}} .revora-submit-btn' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}} !important;',
+					'{{WRAPPER}} .revora-form-footer' => 'margin-top: {{TOP}}{{UNIT}} !important;',
+				),
+			)
+		);
+
+		$this->add_responsive_control(
 			'button_padding',
 			array(
 				'label'      => __( 'Padding', 'revora' ),
 				'type'       => \Elementor\Controls_Manager::DIMENSIONS,
 				'size_units' => array( 'px', '%', 'em' ),
 				'selectors'  => array(
-					'{{WRAPPER}} .revora-submit-btn' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+					'{{WRAPPER}} .revora-submit-btn' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}} !important;',
 				),
 			)
 		);
@@ -659,25 +696,11 @@ class Revora_Review_Form_Widget extends \Elementor\Widget_Base {
 	}
 
 	protected function render() {
-		$settings   = $this->get_settings_for_display();
-		$category   = ! empty( $settings['category'] ) ? $settings['category'] : '';
-		$widget_id  = $this->get_id();
+		$settings = $this->get_settings_for_display();
+		$category = ! empty( $settings['category'] ) ? $settings['category'] : '';
+		$form_id  = ! empty( $settings['form_id'] ) ? intval( $settings['form_id'] ) : 0;
 
 		// Use shortcode to render form
-		echo do_shortcode( '[revora_form category="' . esc_attr( $category ) . '"]' );
-
-		// Hide title via enqueued inline style (no inline <style> tag)
-		if ( 'yes' !== $settings['show_title'] ) {
-			wp_add_inline_style(
-				'revora-frontend',
-				'.elementor-element-' . esc_attr( $widget_id ) . ' .revora-form-container h3 { display: none; }'
-			);
-		} elseif ( ! empty( $settings['form_title'] ) ) {
-			// Override title text via enqueued inline script (no inline <script> tag)
-			wp_add_inline_script(
-				'revora-frontend',
-				'jQuery(document).ready(function($){$(".elementor-element-' . esc_attr( $widget_id ) . ' .revora-form-container h3").text(' . wp_json_encode( $settings['form_title'] ) . ');});'
-			);
-		}
+		echo do_shortcode( '[revora_form id="' . esc_attr( $form_id ) . '" category="' . esc_attr( $category ) . '"]' );
 	}
 }

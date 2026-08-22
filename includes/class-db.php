@@ -16,6 +16,8 @@ class Revora_DB {
 	private $table_name;
 	private $cat_table;
 	private $rel_table;
+	private $form_table;
+	private $meta_table;
 
 	/**
 	 * Constructor
@@ -25,6 +27,25 @@ class Revora_DB {
 		$this->table_name = $wpdb->prefix . 'revora_reviews';
 		$this->cat_table  = $wpdb->prefix . 'revora_categories';
 		$this->rel_table  = $wpdb->prefix . 'revora_review_categories';
+		$this->form_table = $wpdb->prefix . 'revora_forms';
+		$this->meta_table = $wpdb->prefix . 'revora_reviewmeta';
+
+		// Auto-migrate column types if necessary
+		$migrated = get_option( 'revora_db_rating_decimal_v2', false );
+		if ( ! $migrated ) {
+			// Alter rating to decimal(3,1)
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query( "ALTER TABLE {$this->table_name} MODIFY rating decimal(3,1) DEFAULT 5.0 NOT NULL;" );
+			
+			// Check if user_id column exists
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$col = $wpdb->get_results( "SHOW COLUMNS FROM {$this->table_name} LIKE 'user_id'" );
+			if ( empty( $col ) ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$wpdb->query( "ALTER TABLE {$this->table_name} ADD user_id bigint(20) DEFAULT 0 NOT NULL AFTER id;" );
+			}
+			update_option( 'revora_db_rating_decimal_v2', true );
+		}
 	}
 
 	/**
@@ -36,17 +57,19 @@ class Revora_DB {
 
 		$sql = "CREATE TABLE $this->table_name (
 			id bigint(20) NOT NULL AUTO_INCREMENT,
-			category_slug varchar(255) NOT NULL,
+			user_id bigint(20) DEFAULT 0 NOT NULL,
+			form_id bigint(20) DEFAULT 0 NOT NULL,
 			name varchar(255) NOT NULL,
 			email varchar(255) NOT NULL,
-			rating tinyint(1) NOT NULL,
+			rating decimal(3,1) DEFAULT 5.0 NOT NULL,
 			title varchar(255) NOT NULL,
 			content text NOT NULL,
 			ip_address varchar(100) NOT NULL,
 			status varchar(20) DEFAULT 'pending' NOT NULL,
 			created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
 			PRIMARY KEY (id),
-			KEY category_slug (category_slug),
+			KEY user_id (user_id),
+			KEY form_id (form_id),
 			KEY status (status)
 		) $charset_collate;";
 
@@ -78,6 +101,51 @@ class Revora_DB {
 		) $charset_collate;";
 
 		dbDelta( $rel_sql );
+
+		// Create Forms Table
+		$form_sql = "CREATE TABLE $this->form_table (
+			id bigint(20) NOT NULL AUTO_INCREMENT,
+			name varchar(255) NOT NULL,
+			fields longtext,
+			settings longtext,
+			created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+			PRIMARY KEY (id)
+		) $charset_collate;";
+
+		dbDelta( $form_sql );
+
+		// Create Review Meta Table
+		$meta_sql = "CREATE TABLE $this->meta_table (
+			meta_id bigint(20) NOT NULL AUTO_INCREMENT,
+			review_id bigint(20) NOT NULL,
+			meta_key varchar(255) DEFAULT NULL,
+			meta_value longtext,
+			PRIMARY KEY (meta_id),
+			KEY review_id (review_id),
+			KEY meta_key (meta_key(191))
+		) $charset_collate;";
+
+		dbDelta( $meta_sql );
+
+		// Seed Default Form
+		$forms_count = $wpdb->get_var( "SELECT COUNT(*) FROM $this->form_table" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( '0' === $forms_count || 0 === $forms_count || null === $forms_count ) {
+			$default_fields = array(
+				array( 'type' => 'text', 'label' => 'Your Name', 'key' => 'name', 'required' => true ),
+				array( 'type' => 'email', 'label' => 'Your Email', 'key' => 'email', 'required' => true ),
+				array( 'type' => 'rating', 'label' => 'Rating', 'key' => 'rating', 'required' => true ),
+				array( 'type' => 'text', 'label' => 'Review Title', 'key' => 'title', 'required' => true ),
+				array( 'type' => 'textarea', 'label' => 'Review Content', 'key' => 'content', 'required' => true ),
+			);
+			$default_settings = array( 'submit_text' => 'Submit Review' );
+			
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->insert( $this->form_table, array(
+				'name'     => 'Default Form',
+				'fields'   => wp_json_encode( $default_fields ),
+				'settings' => wp_json_encode( $default_settings ),
+			) );
+		}
 	}
 
 	/**
@@ -97,6 +165,7 @@ class Revora_DB {
 		global $wpdb;
 
 		$defaults = array(
+			'form_id'       => 0,
 			'category_slug' => '',
 			'status'        => 'approved',
 			'limit'         => 10,
@@ -108,22 +177,34 @@ class Revora_DB {
 		$args = wp_parse_args( $args, $defaults );
 
 		$params = array();
+		$query = "SELECT r.* FROM $this->table_name r WHERE 1=1";
 
-		if ( ! empty( $args['category_slug'] ) ) {
-			// Join with relationship tables for category filtering
-			$query = "SELECT DISTINCT r.* FROM $this->table_name r
-					  INNER JOIN $this->rel_table rc ON r.id = rc.review_id
-					  INNER JOIN $this->cat_table c ON rc.cat_id = c.id
-					  WHERE 1=1 AND c.slug = %s";
+		if ( ! empty( $args['form_id'] ) && 'all' !== $args['form_id'] && -1 !== (int) $args['form_id'] ) {
+			$query .= " AND r.form_id = %d";
+			$params[] = intval( $args['form_id'] );
+		} elseif ( ! empty( $args['category_slug'] ) ) {
+			$query .= " AND r.form_id IN (SELECT id FROM $this->form_table WHERE name = %s)";
 			$params[] = $args['category_slug'];
-		} else {
-			// Standard query
-			$query = "SELECT r.* FROM $this->table_name r WHERE 1=1";
 		}
 
-		if ( ! empty( $args['status'] ) ) {
+		if ( ! empty( $args['status'] ) && 'all' !== $args['status'] ) {
 			$query .= " AND r.status = %s";
 			$params[] = $args['status'];
+		}
+
+		if ( ! empty( $args['min_rating'] ) ) {
+			$query .= " AND r.rating >= %f";
+			$params[] = floatval( $args['min_rating'] );
+		}
+
+		if ( ! empty( $args['start_date'] ) ) {
+			$query .= " AND r.created_at >= %s";
+			$params[] = sanitize_text_field( $args['start_date'] ) . ' 00:00:00';
+		}
+
+		if ( ! empty( $args['end_date'] ) ) {
+			$query .= " AND r.created_at <= %s";
+			$params[] = sanitize_text_field( $args['end_date'] ) . ' 23:59:59';
 		}
 
 		// Sanitize order direction
@@ -146,25 +227,23 @@ class Revora_DB {
 		return $wpdb->get_results( $wpdb->prepare( $query, $params ) );
 	}
 
-	public function get_approved_reviews( $category_slug = '', $limit = 10 ) {
+	public function get_approved_reviews( $form_id = 0, $limit = 10, $offset = 0 ) {
 		return $this->get_reviews( array(
-			'category_slug' => $category_slug,
-			'status'        => 'approved',
-			'limit'         => $limit,
+			'form_id' => $form_id,
+			'status'  => 'approved',
+			'limit'   => $limit,
+			'offset'  => $offset,
 		) );
 	}
 
-	public function get_total_approved_count( $category_slug = '' ) {
+	public function get_total_approved_count( $form_id = 0 ) {
 		global $wpdb;
 		
-		if ( ! empty( $category_slug ) ) {
+		if ( ! empty( $form_id ) ) {
 			/* phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter */
 			$results = $wpdb->get_var( $wpdb->prepare(
-				"SELECT COUNT(DISTINCT r.id) FROM {$this->table_name} r
-				 INNER JOIN {$this->rel_table} rc ON r.id = rc.review_id
-				 INNER JOIN {$this->cat_table} c ON rc.cat_id = c.id
-				 WHERE r.status = 'approved' AND c.slug = %s",
-				$category_slug
+				"SELECT COUNT(*) FROM {$this->table_name} WHERE status = 'approved' AND form_id = %d",
+				intval( $form_id )
 			) );
 			/* phpcs:enable */
 			return (int) $results;
@@ -174,18 +253,16 @@ class Revora_DB {
 		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM $this->table_name WHERE status = 'approved'" );
 	}
 
-	public function get_stats( $category_slug = null ) {
+	public function get_stats( $form_id = null ) {
 		global $wpdb;
 
-		if ( $category_slug ) {
+		if ( ! empty( $form_id ) ) {
 			/* phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter */
 			$row = $wpdb->get_row( $wpdb->prepare(
-				"SELECT AVG(r.rating) as average, COUNT(DISTINCT r.id) as total 
-				 FROM {$this->table_name} r
-				 INNER JOIN {$this->rel_table} rc ON r.id = rc.review_id
-				 INNER JOIN {$this->cat_table} c ON rc.cat_id = c.id
-				 WHERE c.slug = %s AND r.status = 'approved'",
-				$category_slug
+				"SELECT AVG(rating) as average, COUNT(id) as total 
+				 FROM {$this->table_name} 
+				 WHERE form_id = %d AND status = 'approved'",
+				intval( $form_id )
 			) );
 			/* phpcs:enable */
 			return $row;
@@ -200,7 +277,7 @@ class Revora_DB {
 		);
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$results = $wpdb->get_results( $wpdb->prepare( "SELECT status, COUNT(*) as count, AVG(rating) as avg_rating FROM $this->table_name GROUP BY status" ) );
+		$results = $wpdb->get_results( "SELECT status, COUNT(*) as count, AVG(rating) as avg_rating FROM $this->table_name GROUP BY status" );
 
 		foreach ( $results as $row ) {
 			if ( isset( $stats[ $row->status ] ) ) {
@@ -254,6 +331,11 @@ class Revora_DB {
 	 */
 	public function delete_review( $id ) {
 		global $wpdb;
+		// Delete relationships
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->delete( $this->rel_table, array( 'review_id' => $id ) );
+		// Delete meta
+		$this->delete_review_meta( $id );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return $wpdb->delete( $this->table_name, array( 'id' => $id ) );
 	}
@@ -427,5 +509,93 @@ class Revora_DB {
 		}
 
 		return false;
+	}
+
+	/**
+	 * FORMS METHODS
+	 */
+
+	public function insert_form( $data ) {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$inserted = $wpdb->insert( $this->form_table, $data );
+		return $inserted ? $wpdb->insert_id : false;
+	}
+
+	public function get_forms() {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return $wpdb->get_results( "SELECT * FROM {$this->form_table} ORDER BY name ASC" );
+	}
+
+	public function get_form( $id ) {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$this->form_table} WHERE id = %d", $id ) );
+	}
+
+	public function update_form( $id, $data ) {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return $wpdb->update( $this->form_table, $data, array( 'id' => $id ) );
+	}
+
+	public function delete_form( $id ) {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return $wpdb->delete( $this->form_table, array( 'id' => $id ) );
+	}
+
+	/**
+	 * META METHODS
+	 */
+	public function update_review_meta( $review_id, $meta_key, $meta_value ) {
+		global $wpdb;
+		
+		$meta_value = maybe_serialize( $meta_value );
+		
+		// Check if exists
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$existing = $wpdb->get_var( $wpdb->prepare( "SELECT meta_id FROM {$this->meta_table} WHERE review_id = %d AND meta_key = %s", $review_id, $meta_key ) );
+		
+		if ( $existing ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			return $wpdb->update( $this->meta_table, array( 'meta_value' => $meta_value ), array( 'meta_id' => $existing ) );
+		} else {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			return $wpdb->insert( $this->meta_table, array(
+				'review_id'  => $review_id,
+				'meta_key'   => $meta_key,
+				'meta_value' => $meta_value
+			) );
+		}
+	}
+
+	public function get_review_meta( $review_id, $meta_key = '' ) {
+		global $wpdb;
+		
+		if ( ! empty( $meta_key ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$value = $wpdb->get_var( $wpdb->prepare( "SELECT meta_value FROM {$this->meta_table} WHERE review_id = %d AND meta_key = %s", $review_id, $meta_key ) );
+			return maybe_unserialize( $value );
+		} else {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$results = $wpdb->get_results( $wpdb->prepare( "SELECT meta_key, meta_value FROM {$this->meta_table} WHERE review_id = %d", $review_id ) );
+			$meta = array();
+			foreach ( $results as $row ) {
+				$meta[ $row->meta_key ] = maybe_unserialize( $row->meta_value );
+			}
+			return $meta;
+		}
+	}
+
+	public function delete_review_meta( $review_id, $meta_key = '' ) {
+		global $wpdb;
+		$where = array( 'review_id' => $review_id );
+		if ( ! empty( $meta_key ) ) {
+			$where['meta_key'] = $meta_key;
+		}
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return $wpdb->delete( $this->meta_table, $where );
 	}
 }

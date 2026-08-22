@@ -3,7 +3,7 @@
  * Plugin Name: Revora
  * Plugin URI:  https://revora.moksedul.dev
  * Description: Smart Category-Based Review System for WordPress. Lightweight, custom DB, and AJAX-powered.
- * Version:     1.0.1
+ * Version:     1.9.2
  * Author:      Moksedul Islam
  * Author URI:  https://moksedul.dev
  * License:     GPLv2
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define Constants
-define( 'REVORA_VERSION', '1.0.1' );
+define( 'REVORA_VERSION', time() );
 define( 'REVORA_PATH', plugin_dir_path( __FILE__ ) );
 define( 'REVORA_URL', plugin_dir_url( __FILE__ ) );
 define( 'REVORA_INC', REVORA_PATH . 'includes/' );
@@ -79,6 +79,7 @@ class Revora {
 		require_once REVORA_INC . 'class-db.php';
 		require_once REVORA_INC . 'class-spam.php';
 		require_once REVORA_INC . 'class-ajax.php';
+		require_once REVORA_INC . 'class-form-builder.php';
 		require_once REVORA_INC . 'class-admin.php';
 		require_once REVORA_INC . 'class-shortcodes.php';
 		require_once REVORA_INC . 'class-elementor.php';
@@ -132,8 +133,9 @@ class Revora {
 	 * Enqueue Frontend Assets
 	 */
 	public function enqueue_frontend_assets() {
+		wp_enqueue_style( 'revora-google-material-symbols', 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200', array(), null );
 		wp_enqueue_style( 'dashicons' );
-		wp_enqueue_style( 'revora-frontend', REVORA_URL . 'assets/css/revora-frontend.css', array( 'dashicons' ), REVORA_VERSION );
+		wp_enqueue_style( 'revora-frontend', REVORA_URL . 'assets/css/revora-frontend.css', array( 'dashicons', 'revora-google-material-symbols' ), REVORA_VERSION );
 		wp_enqueue_style( 'revora-card-variants', REVORA_URL . 'assets/css/revora-card-variants.css', array(), REVORA_VERSION );
 		wp_enqueue_script( 'revora-frontend', REVORA_URL . 'assets/js/revora-frontend.js', array( 'jquery' ), REVORA_VERSION, true );
 		

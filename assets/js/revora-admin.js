@@ -1,26 +1,50 @@
 jQuery(document).ready(function($) {
-    function updateStars(rating) {
-        $('.revora-rating-selector .dashicons').each(function() {
-            if ($(this).data('rating') <= rating) {
-                $(this).addClass('active');
+    // Function to render stars based on numeric rating (supports halves)
+    function renderSelectorStars($selector, rating) {
+        $selector.find('.revora-star-icon, .material-symbols-outlined, .dashicons').each(function() {
+            var starIndex = parseFloat($(this).data('rating'));
+            $(this).removeClass('active fill-1');
+            if (rating >= starIndex) {
+                $(this).text('star').addClass('active fill-1');
+            } else if (rating >= (starIndex - 0.5)) {
+                $(this).text('star_half').addClass('active fill-1');
             } else {
-                $(this).removeClass('active');
+                $(this).text('star').removeClass('active fill-1');
             }
         });
+        $selector.find('.revora-rating-value-display').text(rating.toFixed(1));
     }
 
-    // Star Rating Click Handler
-    $('.revora-rating-selector .dashicons').on('click', function() {
-        var rating = $(this).data('rating');
-        $('#rating_input').val(rating);
-        updateStars(rating);
+    // Hover effect for half and full stars
+    $(document).on('mousemove', '.revora-rating-selector .revora-star-icon, .revora-rating-selector .material-symbols-outlined, .revora-rating-selector .dashicons', function(e) {
+        var starIndex = parseFloat($(this).data('rating'));
+        var offset = $(this).offset();
+        var width = $(this).outerWidth();
+        var x = e.pageX - offset.left;
+        var hoverRating = (x < width / 2) ? (starIndex - 0.5) : starIndex;
+        var $selector = $(this).closest('.revora-rating-selector');
+        renderSelectorStars($selector, hoverRating);
     });
 
-    // Initialize stars on page load
-    var initialRating = $('#rating_input').val();
-    if (initialRating) {
-        updateStars(parseInt(initialRating));
-    }
+    $(document).on('mouseleave', '.revora-rating-selector', function() {
+        var $selector = $(this);
+        var currentRating = parseFloat($selector.attr('data-rating') || $selector.find('input[name="rating"]').val() || 5);
+        renderSelectorStars($selector, currentRating);
+    });
+
+    // Click handler for half and full stars
+    $(document).on('click', '.revora-rating-selector .revora-star-icon, .revora-rating-selector .material-symbols-outlined, .revora-rating-selector .dashicons', function(e) {
+        var starIndex = parseFloat($(this).data('rating'));
+        var offset = $(this).offset();
+        var width = $(this).outerWidth();
+        var x = e.pageX - offset.left;
+        var selectedRating = (x < width / 2) ? (starIndex - 0.5) : starIndex;
+        var $selector = $(this).closest('.revora-rating-selector');
+        $selector.attr('data-rating', selectedRating);
+        renderSelectorStars($selector, selectedRating);
+        $selector.find('input[name="rating"], .revora-rating-input').val(selectedRating);
+        $selector.closest('form').find('input[name="rating"]').val(selectedRating);
+    });
 
     // Quick Edit Logic
     $(document).on('click', '.revora-quick-edit-trigger', function(e) {

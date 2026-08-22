@@ -40,19 +40,19 @@ class Revora_Reviews_Display_Widget extends \Elementor\Widget_Base {
 		);
 
 		$db = new Revora_DB();
-		$categories = $db->get_categories();
-		$category_options = array( '' => __( 'All Categories', 'revora' ) );
-		foreach ( $categories as $cat ) {
-			$category_options[ $cat->slug ] = $cat->name;
+		$forms = $db->get_forms();
+		$form_options = array( '0' => __( 'All Forms', 'revora' ) );
+		foreach ( $forms as $form ) {
+			$form_options[ $form->id ] = $form->name;
 		}
 
 		$this->add_control(
-			'category',
+			'form_id',
 			array(
-				'label'   => __( 'Category', 'revora' ),
+				'label'   => __( 'Select Form', 'revora' ),
 				'type'    => \Elementor\Controls_Manager::SELECT,
-				'options' => $category_options,
-				'default' => '',
+				'options' => $form_options,
+				'default' => '0',
 			)
 		);
 
@@ -440,7 +440,7 @@ class Revora_Reviews_Display_Widget extends \Elementor\Widget_Base {
 					),
 				),
 				'selectors'  => array(
-					'{{WRAPPER}} .revora-review-rating .dashicons' => 'font-size: {{SIZE}}{{UNIT}}; width: {{SIZE}}{{UNIT}}; height: {{SIZE}}{{UNIT}};',
+					'{{WRAPPER}} .revora-review-rating .revora-star, {{WRAPPER}} .revora-review-rating .material-symbols-outlined, {{WRAPPER}} .revora-review-rating .dashicons' => 'font-size: {{SIZE}}{{UNIT}} !important; width: {{SIZE}}{{UNIT}} !important; height: {{SIZE}}{{UNIT}} !important; line-height: {{SIZE}}{{UNIT}} !important;',
 				),
 			)
 		);
@@ -451,7 +451,7 @@ class Revora_Reviews_Display_Widget extends \Elementor\Widget_Base {
 				'label'     => __( 'Filled Color', 'revora' ),
 				'type'      => \Elementor\Controls_Manager::COLOR,
 				'selectors' => array(
-					'{{WRAPPER}} .revora-review-rating .dashicons.filled' => 'color: {{VALUE}};',
+					'{{WRAPPER}} .revora-review-rating .revora-star.filled, {{WRAPPER}} .revora-review-rating .revora-star.fill-1, {{WRAPPER}} .revora-review-rating .material-symbols-outlined.fill-1, {{WRAPPER}} .revora-review-rating .dashicons.filled' => 'color: {{VALUE}} !important;',
 				),
 			)
 		);
@@ -462,7 +462,7 @@ class Revora_Reviews_Display_Widget extends \Elementor\Widget_Base {
 				'label'     => __( 'Empty Color', 'revora' ),
 				'type'      => \Elementor\Controls_Manager::COLOR,
 				'selectors' => array(
-					'{{WRAPPER}} .revora-review-rating .dashicons.empty' => 'color: {{VALUE}};',
+					'{{WRAPPER}} .revora-review-rating .revora-star.empty, {{WRAPPER}} .revora-review-rating .material-symbols-outlined:not(.fill-1), {{WRAPPER}} .revora-review-rating .dashicons.empty' => 'color: {{VALUE}} !important;',
 				),
 			)
 		);
@@ -769,7 +769,7 @@ class Revora_Reviews_Display_Widget extends \Elementor\Widget_Base {
 
 	protected function render() {
 		$settings = $this->get_settings_for_display();
-		$category = ! empty( $settings['category'] ) ? $settings['category'] : '';
+		$form_id = ! empty( $settings['form_id'] ) ? intval( $settings['form_id'] ) : 0;
 		$limit = ! empty( $settings['limit'] ) ? $settings['limit'] : 6;
 		$columns = ! empty( $settings['columns'] ) ? $settings['columns'] : 3;
 		$card_style = ! empty( $settings['card_style'] ) ? $settings['card_style'] : 'classic';
@@ -785,7 +785,7 @@ class Revora_Reviews_Display_Widget extends \Elementor\Widget_Base {
 
 		echo '<div class="' . esc_attr( $container_class ) . '" data-load-more-text="' . esc_attr( $settings['load_more_text'] ) . '">';
 		// Use shortcode to render reviews
-		echo do_shortcode( '[revora_reviews category="' . esc_attr( $category ) . '" limit="' . esc_attr( $limit ) . '" columns="' . esc_attr( $columns ) . '" card_style="' . esc_attr( $card_style ) . '"]' );
+		echo do_shortcode( '[revora_reviews form_id="' . esc_attr( $form_id ) . '" limit="' . esc_attr( $limit ) . '" columns="' . esc_attr( $columns ) . '" card_style="' . esc_attr( $card_style ) . '"]' );
 		echo '</div>';
 	}
 }
