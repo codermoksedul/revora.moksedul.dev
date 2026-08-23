@@ -123,29 +123,15 @@ jQuery(document).ready(function($) {
             $('body').append(modalHtml);
             $modal = $('#revora-success-modal-overlay');
             
-            $modal.on('click', function(e) {
-                if ( $(e.target).is('#revora-success-modal-overlay') || $(e.target).closest('#revora-modal-close-icon').length ) {
-                    $modal.removeClass('active');
-                }
-            });
-            $(document).on('keydown', function(e) {
-                if ( e.key === 'Escape' && $modal.hasClass('active') ) {
-                    $modal.removeClass('active');
-                    $('#revora-share-card-modal').removeClass('active');
-                }
+            // Close Success Modal ONLY on close icon click
+            $(document).on('click', '#revora-modal-close-icon, .revora-success-close-icon', function(e) {
+                e.stopPropagation();
+                $('#revora-success-modal-overlay').removeClass('active');
             });
             
             $('#revora-modal-share-btn').on('click', function() {
-                $modal.removeClass('active');
+                $('#revora-success-modal-overlay').removeClass('active');
                 $('#revora-share-card-modal').addClass('active');
-            });
-            
-
-            
-            $('#revora-share-card-modal').on('click', function(e) {
-                if ( $(e.target).is('#revora-share-card-modal') ) {
-                    $(this).removeClass('active');
-                }
             });
             
             $('#revora-download-card-btn').on('click', function() {
@@ -174,6 +160,13 @@ jQuery(document).ready(function($) {
                     link.download = 'share-card.png';
                     link.href = canvas.toDataURL('image/png');
                     link.click();
+                    $btn.html(originalHtml).prop('disabled', false);
+
+                    // Automatically close share card dialog after successful download
+                    setTimeout(function() {
+                        $('#revora-share-card-modal').removeClass('active');
+                    }, 500);
+                }).catch(function() {
                     $btn.html(originalHtml).prop('disabled', false);
                 });
             }
@@ -249,7 +242,11 @@ jQuery(document).ready(function($) {
 
         const $form = $(this);
         const $submitBtn = $form.find('.revora-submit-btn');
-        const originalBtnText = $submitBtn.find('.btn-text').text();
+        var originalBtnText = $submitBtn.data('original-text');
+        if ( ! originalBtnText ) {
+            originalBtnText = $submitBtn.find('.btn-text').text() || 'Submit Review';
+            $submitBtn.data('original-text', originalBtnText);
+        }
         const $message = $form.find('.revora-form-message');
         
         // Manual Validation for Rating
@@ -310,7 +307,8 @@ jQuery(document).ready(function($) {
             contentType: false,
             success: function(response) {
                 if (response.success) {
-                    $message.hide();
+                    var successMsg = (response.data && response.data.message) ? response.data.message : 'Thank you! Your review has been submitted successfully.';
+                    $message.html('<span class="material-symbols-outlined">check_circle</span> ' + successMsg).removeClass('error').addClass('success').fadeIn();
                     
                     var avatarDataUrl = '';
                     var $avatarInput = $form.find('input[type="file"][name="profile_image"], input[type="file"][name="avatar"]');
@@ -334,15 +332,16 @@ jQuery(document).ready(function($) {
                     // Show Modern Success Popup with Share Card Data
                     showSuccessModal(response.data, avatarDataUrl);
                 } else {
-                    $message.addClass('error').html(response.data.message || 'Error occurred.').fadeIn();
+                    $message.addClass('error').html('<span class="material-symbols-outlined">error</span> ' + (response.data.message || 'Error occurred.')).fadeIn();
                 }
             },
             error: function() {
-                $message.addClass('error').text('Server error. Please try again later.').fadeIn();
+                $message.addClass('error').html('<span class="material-symbols-outlined">error</span> Server error. Please try again later.').fadeIn();
             },
             complete: function() {
+                var resetText = $submitBtn.data('original-text') || originalBtnText || 'Submit Review';
                 $submitBtn.prop('disabled', false);
-                $submitBtn.find('.btn-text').text(originalBtnText);
+                $submitBtn.find('.btn-text').text(resetText);
                 $submitBtn.find('.revora-spinner').hide();
             }
         });
