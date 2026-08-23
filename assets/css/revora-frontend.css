@@ -1204,3 +1204,192 @@ form#revora-review-form .revora-form-field .iti input[type="number"] {
     top: -10px;
   }
 }
+
+/* Share Card Modal Styles */
+#revora-share-card-modal {
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+#revora-share-card-modal.active {
+  display: flex;
+}
+.revora-share-card-modal-content {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 30px;
+  position: relative;
+  max-width: 90%;
+  width: 440px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.revora-share-close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 24px;
+  transition: color 0.2s ease;
+}
+.revora-share-close-btn:hover {
+  color: #0f172a;
+}
+.revora-download-card-btn {
+  margin-top: 25px !important;
+  background: var(--revora-primary, #2563eb) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 12px 24px !important;
+  font-weight: 600 !important;
+  font-size: 16px !important;
+  cursor: pointer !important;
+  width: 100% !important;
+  transition: background 0.2s ease !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+.revora-download-card-btn:hover {
+  background: var(--revora-primary-dark, #1d4ed8) !important;
+}
+
+/* Share Card Canvas Design */
+.revora-share-card-canvas {
+  width: 380px;
+  height: 480px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+  transform-origin: top center;
+}
+/* Mobile: scale down preview visually, download stays full quality */
+.revora-share-card-modal-content {
+  overflow: visible;
+}
+@media (max-width: 430px) {
+  .revora-share-card-canvas {
+    transform: scale(0.75);
+    margin-bottom: calc(-480px * 0.25); /* Collapse the extra space from scaling */
+  }
+  .revora-share-card-modal-content {
+    padding: 15px;
+    padding-top: 20px;
+  }
+  .revora-download-card-btn {
+    margin-top: 10px !important;
+    font-size: 14px !important;
+    padding: 10px 20px !important;
+  }
+}
+.revora-share-card-bg {
+  width: 100%;
+  height: 100%;
+  background-color: #ffffff;
+  position: relative;
+  overflow: hidden;
+}
+.revora-share-card-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 150px;
+  opacity: 0.05;
+  pointer-events: none;
+  z-index: 1;
+}
+.revora-share-card-inner {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 20px 20px;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.revora-share-card-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 20px;
+  font-size: 13px;
+  border-top: 1px dashed #e2e8f0;
+  width: 100%;
+}
+.revora-share-card-brand img {
+  height: 20px;
+  width: auto;
+  border-radius: 4px;
+}
+
+.revora-share-card-avatar {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  background-size: cover;
+  background-position: center;
+  border: 3px solid var(--revora-primary, #2563eb);
+  box-shadow: 0 0 20px rgba(37, 99, 235, 0.2);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.revora-share-card-name {
+  font-size: 26px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 10px 0;
+  text-align: center;
+}
+
+.revora-share-card-stars {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 25px;
+}
+.revora-share-star {
+  font-size: 28px;
+  line-height: 1;
+}
+.revora-share-star.filled {
+  color: #fbbf24; /* Gold */
+}
+.revora-share-star.half {
+  color: #fbbf24;
+  position: relative;
+}
+.revora-share-star.half::after {
+  content: "★";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #e2e8f0;
+  clip-path: polygon(50% 0, 100% 0, 100% 100%, 50% 100%);
+}
+.revora-share-star.empty {
+  color: #e2e8f0;
+}
+
+.revora-share-card-footer {
+  font-size: 18px;
+  font-weight: 500;
+  color: #475569;
+  text-align: center;
+  line-height: 1.4;
+  margin: 0 0 auto 0;
+  font-style: italic;
+}

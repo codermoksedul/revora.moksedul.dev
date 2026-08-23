@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define Constants
-define( 'REVORA_VERSION', '2.0.9' );
+define( 'REVORA_VERSION', '2.1.23' );
 define( 'REVORA_PATH', plugin_dir_path( __FILE__ ) );
 define( 'REVORA_URL', plugin_dir_url( __FILE__ ) );
 define( 'REVORA_INC', REVORA_PATH . 'includes/' );

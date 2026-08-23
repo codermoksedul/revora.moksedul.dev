@@ -212,6 +212,17 @@ class Revora_Form_Builder {
 									<label class="revora-field-label"><?php esc_html_e( 'Success Message', 'revora' ); ?></label>
 									<textarea name="settings[success_message]" class="widefat" rows="3" placeholder="<?php esc_attr_e( 'Thank you for your review!', 'revora' ); ?>"><?php echo esc_textarea( $settings['success_message'] ?? '' ); ?></textarea>
 								</div>
+								
+								<div class="revora-field-group" style="margin-top: 25px;">
+									<label class="revora-toggle-label">
+										<span><?php esc_html_e( 'Enable Share Card', 'revora' ); ?></span>
+										<label class="revora-toggle">
+											<input type="checkbox" name="settings[enable_share_card]" value="1" <?php checked( isset( $settings['enable_share_card'] ) ? $settings['enable_share_card'] : '', '1' ); ?>>
+											<span class="revora-toggle-slider"></span>
+										</label>
+									</label>
+									<p class="description" style="margin-top: 8px;"><?php esc_html_e( 'If enabled, users can download a customized Share Card featuring their name and rating upon successful submission.', 'revora' ); ?></p>
+								</div>
 							</div>
 
 						</div><!-- /.revora-sidebar-content -->

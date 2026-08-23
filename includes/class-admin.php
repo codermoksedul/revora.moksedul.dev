@@ -125,6 +125,8 @@ class Revora_Admin {
 	 */
 	private function get_settings_defaults() {
 		return array(
+			'website_name'   => get_bloginfo( 'name' ),
+			'website_logo'   => '',
 			'primary_color'  => '#2563eb',
 			'star_color'     => '#f59e0b',
 			'card_style'     => 'classic',
@@ -143,6 +145,14 @@ class Revora_Admin {
 	 */
 	public function sanitize_settings( $input ) {
 		$sanitized = array();
+
+		$sanitized['website_name'] = isset( $input['website_name'] )
+			? sanitize_text_field( $input['website_name'] )
+			: get_bloginfo( 'name' );
+
+		$sanitized['website_logo'] = isset( $input['website_logo'] )
+			? esc_url_raw( $input['website_logo'] )
+			: '';
 
 		$sanitized['primary_color'] = isset( $input['primary_color'] )
 			? ( sanitize_hex_color( $input['primary_color'] ) ?? '#2563eb' )
@@ -392,7 +402,9 @@ class Revora_Admin {
 
 			$settings = isset( $_POST['settings'] ) ? wp_unslash( $_POST['settings'] ) : array();
 			$sanitized_settings = array(
-				'submit_text' => sanitize_text_field( $settings['submit_text'] ?? 'Submit Review' ),
+				'submit_text'       => sanitize_text_field( $settings['submit_text'] ?? 'Submit Review' ),
+				'success_message'   => sanitize_textarea_field( $settings['success_message'] ?? 'Thank you for your review!' ),
+				'enable_share_card' => isset( $settings['enable_share_card'] ) ? '1' : '0',
 			);
 
 			$data = array(
@@ -1868,6 +1880,18 @@ class Revora_Admin {
 									<span><?php esc_html_e( 'Design & Display Settings', 'revora' ); ?></span>
 								</div>
 								<div class="revora-card-body">
+									<div class="revora-field-group">
+										<label class="revora-field-label" for="revora_website_name"><?php esc_html_e( 'Brand/Website Name', 'revora' ); ?></label>
+										<input type="text" name="revora_settings[website_name]" id="revora_website_name" value="<?php echo esc_attr( $settings['website_name'] ); ?>" class="regular-text" />
+										<p class="description"><?php esc_html_e( 'Used on the Share Card.', 'revora' ); ?></p>
+									</div>
+
+									<div class="revora-field-group">
+										<label class="revora-field-label" for="revora_website_logo"><?php esc_html_e( 'Brand Logo URL', 'revora' ); ?></label>
+										<input type="url" name="revora_settings[website_logo]" id="revora_website_logo" value="<?php echo esc_url( $settings['website_logo'] ); ?>" class="regular-text" />
+										<p class="description"><?php esc_html_e( 'URL of your logo image. Used on the Share Card.', 'revora' ); ?></p>
+									</div>
+
 									<div class="revora-field-group">
 										<label class="revora-field-label" for="revora_primary_color"><?php esc_html_e( 'Primary Brand Color', 'revora' ); ?></label>
 										<input type="text" name="revora_settings[primary_color]" id="revora_primary_color" value="<?php echo esc_attr( $settings['primary_color'] ); ?>" class="revora-color-picker" data-default-color="#2563eb" />

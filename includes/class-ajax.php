@@ -88,9 +88,31 @@ class Revora_Ajax {
 				? __( 'Thank you! Your review has been published.', 'revora' )
 				: __( 'Thank you! Your review has been submitted and is awaiting moderation.', 'revora' );
 
-			wp_send_json_success( array(
+			$response_data = array(
 				'message' => $success_msg,
-			) );
+			);
+			
+			// Check if Share Card is enabled
+			if ( $form_id ) {
+				$form_obj = $db->get_form( $form_id );
+				if ( $form_obj ) {
+					$form_settings = json_decode( $form_obj->settings, true );
+					if ( isset( $form_settings['enable_share_card'] ) && $form_settings['enable_share_card'] == '1' ) {
+						$response_data['enable_share_card'] = true;
+						$response_data['reviewer_name'] = $data['name'];
+						$response_data['rating'] = $data['rating'];
+						$response_data['content'] = $data['content'];
+
+						// Fetch Global Settings for Branding
+						$global_settings = get_option( 'revora_settings', array() );
+						$response_data['website_name'] = isset($global_settings['website_name']) ? $global_settings['website_name'] : get_bloginfo('name');
+						$response_data['website_logo'] = isset($global_settings['website_logo']) ? $global_settings['website_logo'] : '';
+						$response_data['primary_color'] = isset($global_settings['primary_color']) ? $global_settings['primary_color'] : '#2563eb';
+					}
+				}
+			}
+
+			wp_send_json_success( $response_data );
 		} else {
 			wp_send_json_error( array( 'message' => __( 'Something went wrong. Please try again.', 'revora' ) ) );
 		}
