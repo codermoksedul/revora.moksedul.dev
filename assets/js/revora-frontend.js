@@ -103,14 +103,50 @@ jQuery(document).ready(function($) {
                     <div class="revora-share-card-modal-content">
                         <div id="revora-share-card-canvas" class="revora-share-card-canvas">
                             <div class="revora-share-card-bg">
-                                <div class="revora-share-card-glow"></div>
+                                <!-- Minimal & Clean Single Wave Shapes -->
+                                <svg class="revora-share-card-bg-shapes" viewBox="0 0 380 500" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style="position:absolute; inset:0; pointer-events:none; z-index:1;">
+                                    <defs>
+                                        <linearGradient id="revoraTopLeftGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#93c5fd" stop-opacity="0.25" />
+                                            <stop offset="60%" stop-color="#bfdbfe" stop-opacity="0.1" />
+                                            <stop offset="100%" stop-color="#eff6ff" stop-opacity="0" />
+                                        </linearGradient>
+                                        <linearGradient id="revoraBottomGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#93c5fd" stop-opacity="0.32" />
+                                            <stop offset="50%" stop-color="#bfdbfe" stop-opacity="0.18" />
+                                            <stop offset="100%" stop-color="#dbeafe" stop-opacity="0.06" />
+                                        </linearGradient>
+                                    </defs>
+                                    <!-- Top Left Single Soft Curve -->
+                                    <path d="M 0 0 L 0 90 C 35 75, 85 45, 160 0 Z" fill="url(#revoraTopLeftGrad)"/>
+                                    <!-- Bottom Single Soft Elegant Wave -->
+                                    <path d="M 0 455 C 70 440, 160 480, 380 468 L 380 500 L 0 500 Z" fill="url(#revoraBottomGrad)"/>
+                                </svg>
+
                                 <div class="revora-share-card-inner">
-                                    <div class="revora-share-card-avatar" id="revora-share-avatar"><img id="revora-share-avatar-fallback" src="" alt="" style="display:none; width:55%; height:55%; object-fit:contain;"></div>
+                                    <!-- Top Brand Logo -->
+                                    <div class="revora-share-card-logo-wrap" id="revora-share-logo-wrap">
+                                        <img src="" id="revora-share-brand-logo" alt="Logo" style="display:none;" />
+                                        <span id="revora-share-brand-logo-text" style="display:none;"></span>
+                                    </div>
+
+                                    <!-- Profile Avatar -->
+                                    <div class="revora-share-card-avatar" id="revora-share-avatar">
+                                        <img id="revora-share-avatar-fallback" src="" alt="" style="display:none; width:55%; height:55%; object-fit:contain;">
+                                    </div>
+
+                                    <!-- Reviewer Name -->
                                     <h3 class="revora-share-card-name" id="revora-share-name"></h3>
+
+                                    <!-- Star Ratings -->
                                     <div class="revora-share-card-stars" id="revora-share-stars"></div>
+
+                                    <!-- Review Text -->
                                     <p class="revora-share-card-footer" id="revora-share-content"></p>
+
+                                    <!-- Footer Verified Badge -->
                                     <div class="revora-share-card-brand" id="revora-share-brand">
-                                        <span class="material-symbols-outlined" style="font-size:16px; color:#10b981;">verified</span>
+                                        <span class="material-symbols-outlined revora-verified-icon">verified</span>
                                         <span id="revora-share-brand-name"></span>
                                     </div>
                                 </div>
@@ -178,16 +214,26 @@ jQuery(document).ready(function($) {
             $('#revora-modal-share-btn').show();
             $('#revora-share-name').text(data.reviewer_name);
             
-            // Dynamic SVG Dot Grid Pattern for html2canvas compatibility
             var primaryColor = data.primary_color || '#2563eb';
-            var encodedColor = encodeURIComponent(primaryColor);
-            var svgPattern = "data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='2' cy='2' r='1.5' fill='" + encodedColor + "' opacity='0.03' /%3E%3C/svg%3E";
-            $('.revora-share-card-bg').css('background-image', 'url("' + svgPattern + '")');
-            $('.revora-share-card-glow').css('background', 'linear-gradient(180deg, ' + primaryColor + ' 0%, rgba(255,255,255,0) 100%)');
+            $('#revora-share-bottom-wave-primary').attr('fill', primaryColor);
             
-            // Populate Brand Info
+            // Handle Brand Logo at Top
+            if (data.website_logo) {
+                $('#revora-share-brand-logo').attr('src', data.website_logo).show();
+                $('#revora-share-brand-logo-text').hide();
+                $('#revora-share-logo-wrap').show();
+            } else if (data.website_name) {
+                $('#revora-share-brand-logo').hide();
+                $('#revora-share-brand-logo-text').text(data.website_name).show();
+                $('#revora-share-logo-wrap').show();
+            } else {
+                $('#revora-share-logo-wrap').hide();
+            }
+
+            // Populate Brand Info Footer
             if (data.website_name) {
-                $('#revora-share-brand-name').html('<span style="color:#64748b; font-weight:500;">Verified Review on</span> <strong style="color:var(--revora-primary, #2563eb); font-weight:700; margin-left:4px;">' + data.website_name + '</strong>');
+                $('#revora-share-brand-name').html('<span style="color:#64748b; font-weight:500;">Verified Review on</span> <strong style="color:' + primaryColor + '; font-weight:700; margin-left:4px;">' + data.website_name + '</strong>');
+                $('#revora-share-brand').show();
             } else {
                 $('#revora-share-brand').hide();
             }
@@ -208,8 +254,8 @@ jQuery(document).ready(function($) {
             
             // Add Review Content
             var reviewText = data.content || '';
-            if (reviewText.length > 90) {
-                reviewText = reviewText.substring(0, 90) + '...';
+            if (reviewText.length > 100) {
+                reviewText = reviewText.substring(0, 100) + '...';
             }
             if (reviewText) {
                 $('#revora-share-content').text('"' + reviewText + '"');
@@ -218,11 +264,13 @@ jQuery(document).ready(function($) {
             }
             if (avatarDataUrl) {
                 $('#revora-share-avatar').css({'background-image': 'url(' + avatarDataUrl + ')', 'background-size': 'cover'});
+                $('#revora-share-avatar').empty();
             } else if (data.avatar_url) {
                 $('#revora-share-avatar').css({'background-image': 'url(' + data.avatar_url + ')', 'background-size': 'cover'});
+                $('#revora-share-avatar').empty();
             } else {
                 var inlineSvg = '<svg viewBox="0 0 482.9 482.9" xmlns="http://www.w3.org/2000/svg" style="width:60%;height:60%;flex-shrink:0;"><path fill="#cbd5e1" d="M239.7,260.2c0.5,0,1,0,1.6,0c0.2,0,0.4,0,0.6,0c0.3,0,0.7,0,1,0c29.3-0.5,53-10.8,70.5-30.5c38.5-43.4,32.1-117.8,31.4-124.9c-2.5-53.3-27.7-78.8-48.5-90.7C280.8,5.2,262.7,0.4,242.5,0h-0.7c-0.1,0-0.3,0-0.4,0h-0.6c-11.1,0-32.9,1.8-53.8,13.7c-21,11.9-46.6,37.4-49.1,91.1c-0.7,7.1-7.1,81.5,31.4,124.9C186.7,249.4,210.4,259.7,239.7,260.2z M239.7,260.2 M164.6,107.3c0-0.3,0.1-0.6,0.1-0.8c3.3-71.7,54.2-79.4,76-79.4h0.4c0.2,0,0.5,0,0.8,0c27,0.6,72.9,11.6,76,79.4c0,0.3,0,0.6,0.1,0.8c0.1,0.7,7.1,68.7-24.7,104.5c-12.6,14.2-29.4,21.2-51.5,21.4c-0.2,0-0.3,0-0.5,0l0,0c-0.2,0-0.3,0-0.5,0c-22-0.2-38.9-7.2-51.4-21.4C157.7,176.2,164.5,107.9,164.6,107.3z"/><path fill="#cbd5e1" d="M446.8,383.6c0-0.1,0-0.2,0-0.3c0-0.8-0.1-1.6-0.1-2.5c-0.6-19.8-1.9-66.1-45.3-80.9c-0.3-0.1-0.7-0.2-1-0.3c-45.1-11.5-82.6-37.5-83-37.8c-6.1-4.3-14.5-2.8-18.8,3.3c-4.3,6.1-2.8,14.5,3.3,18.8c1.7,1.2,41.5,28.9,91.3,41.7c23.3,8.3,25.9,33.2,26.6,56c0,0.9,0,1.7,0.1,2.5c0.1,9-0.5,22.9-2.1,30.9c-16.2,9.2-79.7,41-176.3,41c-96.2,0-160.1-31.9-176.4-41.1c-1.6-8-2.3-21.9-2.1-30.9c0-0.8,0.1-1.6,0.1-2.5c0.7-22.8,3.3-47.7,26.6-56c49.8-12.8,89.6-40.6,91.3-41.7c6.1-4.3,7.6-12.7,3.3-18.8c-4.3-6.1-12.7-7.6-18.8-3.3c-0.4,0.3-37.7,26.3-83,37.8c-0.4,0.1-0.7,0.2-1,0.3c-43.4,14.9-44.7,61.2-45.3,80.9c0,0.9,0,1.7-0.1,2.5c0,0.1,0,0.2,0,0.3c-0.1,5.2-0.2,31.9,5.1,45.3c1,2.6,2.8,4.8,5.2,6.3c3,2,74.9,47.8,195.2,47.8s192.2-45.9,195.2-47.8c2.3-1.5,4.2-3.7,5.2-6.3C447,415.5,446.9,388.8,446.8,383.6z"/></svg>';
-                $('#revora-share-avatar').html(inlineSvg).css({'display': 'flex', 'align-items': 'center', 'justify-content': 'center', 'overflow': 'hidden'});
+                $('#revora-share-avatar').html(inlineSvg).css({'display': 'flex', 'align-items': 'center', 'justify-content': 'center', 'overflow': 'hidden', 'background-image': 'none'});
                 $('#revora-share-avatar-fallback').hide();
             }
         } else {
@@ -242,11 +290,11 @@ jQuery(document).ready(function($) {
 
         const $form = $(this);
         const $submitBtn = $form.find('.revora-submit-btn');
-        var originalBtnText = $submitBtn.data('original-text');
-        if ( ! originalBtnText ) {
-            originalBtnText = $submitBtn.find('.btn-text').text() || 'Submit Review';
-            $submitBtn.data('original-text', originalBtnText);
+        var originalBtnText = $submitBtn.attr('data-original-text') || $submitBtn.find('.btn-text').text() || 'Submit Review';
+        if (originalBtnText === 'Submitting...' || originalBtnText === 'Loading...' || !originalBtnText.trim()) {
+            originalBtnText = 'Submit Review';
         }
+        $submitBtn.attr('data-original-text', originalBtnText);
         const $message = $form.find('.revora-form-message');
         
         // Manual Validation for Rating
@@ -306,6 +354,14 @@ jQuery(document).ready(function($) {
             processData: false,
             contentType: false,
             success: function(response) {
+                var resetText = $submitBtn.attr('data-original-text') || originalBtnText || 'Submit Review';
+                if (resetText === 'Submitting...' || resetText === 'Loading...' || !resetText.trim()) {
+                    resetText = 'Submit Review';
+                }
+                $submitBtn.prop('disabled', false);
+                $submitBtn.find('.btn-text').text(resetText);
+                $submitBtn.find('.revora-spinner').hide();
+
                 if (response.success) {
                     var successMsg = (response.data && response.data.message) ? response.data.message : 'Thank you! Your review has been submitted successfully.';
                     $message.html('<span class="material-symbols-outlined">check_circle</span> ' + successMsg).removeClass('error').addClass('success').fadeIn();
@@ -336,10 +392,20 @@ jQuery(document).ready(function($) {
                 }
             },
             error: function() {
+                var resetText = $submitBtn.attr('data-original-text') || originalBtnText || 'Submit Review';
+                if (resetText === 'Submitting...' || resetText === 'Loading...' || !resetText.trim()) {
+                    resetText = 'Submit Review';
+                }
+                $submitBtn.prop('disabled', false);
+                $submitBtn.find('.btn-text').text(resetText);
+                $submitBtn.find('.revora-spinner').hide();
                 $message.addClass('error').html('<span class="material-symbols-outlined">error</span> Server error. Please try again later.').fadeIn();
             },
             complete: function() {
-                var resetText = $submitBtn.data('original-text') || originalBtnText || 'Submit Review';
+                var resetText = $submitBtn.attr('data-original-text') || originalBtnText || 'Submit Review';
+                if (resetText === 'Submitting...' || resetText === 'Loading...' || !resetText.trim()) {
+                    resetText = 'Submit Review';
+                }
                 $submitBtn.prop('disabled', false);
                 $submitBtn.find('.btn-text').text(resetText);
                 $submitBtn.find('.revora-spinner').hide();
@@ -551,5 +617,18 @@ jQuery(document).ready(function($) {
     // Store original placeholder on load
     $('.revora-file-text').each(function() {
         $(this).data('placeholder', $(this).text());
+    });
+
+    // Store original button text on load
+    $('.revora-submit-btn').each(function() {
+        var $btn = $(this);
+        var t = $btn.attr('data-original-text') || $btn.find('.btn-text').text().trim() || 'Submit Review';
+        if (t === 'Submitting...' || t === 'Loading...' || !t) {
+            t = 'Submit Review';
+        }
+        $btn.attr('data-original-text', t);
+        $btn.find('.btn-text').text(t);
+        $btn.prop('disabled', false);
+        $btn.find('.revora-spinner').hide();
     });
 });

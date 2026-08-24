@@ -1260,11 +1260,11 @@ form#revora-review-form .revora-form-field .iti input[type="number"] {
 /* Share Card Canvas Design */
 .revora-share-card-canvas {
   width: 380px;
-  height: 480px;
+  height: 500px;
   position: relative;
   overflow: hidden;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+  border-radius: 20px;
+  box-shadow: 0 12px 36px rgba(37, 99, 235, 0.12);
   transform-origin: top center;
 }
 /* Mobile: scale down preview visually, download stays full quality */
@@ -1274,7 +1274,7 @@ form#revora-review-form .revora-form-field .iti input[type="number"] {
 @media (max-width: 430px) {
   .revora-share-card-canvas {
     transform: scale(0.75);
-    margin-bottom: calc(-480px * 0.25); /* Collapse the extra space from scaling */
+    margin-bottom: calc(-500px * 0.25); /* Collapse the extra space from scaling */
   }
   .revora-share-card-modal-content {
     padding: 15px;
@@ -1289,17 +1289,16 @@ form#revora-review-form .revora-form-field .iti input[type="number"] {
 .revora-share-card-bg {
   width: 100%;
   height: 100%;
-  background-color: #ffffff;
+  background: linear-gradient(175deg, #f0f6ff 0%, #ffffff 45%, #f5f9ff 100%);
   position: relative;
   overflow: hidden;
 }
-.revora-share-card-glow {
+.revora-share-card-bg-shapes {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  height: 150px;
-  opacity: 0.05;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
   z-index: 1;
 }
@@ -1309,67 +1308,74 @@ form#revora-review-form .revora-form-field .iti input[type="number"] {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 30px 20px 20px;
+  padding: 24px 22px 28px;
   width: 100%;
   height: 100%;
   box-sizing: border-box;
 }
 
-.revora-share-card-brand {
+.revora-share-card-logo-wrap {
+  height: 42px;
+  margin-bottom: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  margin-top: auto;
-  padding-top: 20px;
-  font-size: 13px;
-  border-top: 1px dashed #e2e8f0;
   width: 100%;
 }
-.revora-share-card-brand img {
-  height: 20px;
-  width: auto;
-  border-radius: 4px;
+.revora-share-card-logo-wrap img {
+  max-height: 38px;
+  max-width: 170px;
+  object-fit: contain;
+}
+.revora-share-card-logo-wrap span {
+  font-size: 19px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.4px;
 }
 
 .revora-share-card-avatar {
-  width: 130px;
-  height: 130px;
+  width: 105px;
+  height: 105px;
   border-radius: 50%;
   background-color: #ffffff;
   background-size: cover;
   background-position: center;
-  border: 3px solid var(--revora-primary, #2563eb);
-  box-shadow: 0 0 20px rgba(37, 99, 235, 0.2);
-  margin-bottom: 20px;
+  border: 3.5px solid var(--revora-primary, #3b82f6);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.18);
+  margin-bottom: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .revora-share-card-name {
-  font-size: 26px;
-  font-weight: 600;
+  font-size: 23px;
+  font-weight: 800;
   color: #0f172a;
-  margin: 0 0 10px 0;
+  margin: 0 0 8px 0;
   text-align: center;
+  letter-spacing: -0.4px;
+  line-height: 1.2;
 }
 
 .revora-share-card-stars {
   display: flex;
-  gap: 4px;
-  margin-bottom: 25px;
+  gap: 5px;
+  margin-bottom: 16px;
+  justify-content: center;
 }
 .revora-share-star {
-  font-size: 28px;
+  font-size: 22px;
   line-height: 1;
 }
 .revora-share-star.filled {
-  color: #fbbf24; /* Gold */
+  color: #f59e0b; /* Gold */
 }
 .revora-share-star.half {
-  color: #fbbf24;
+  color: #f59e0b;
   position: relative;
 }
 .revora-share-star.half::after {
@@ -1385,11 +1391,30 @@ form#revora-review-form .revora-form-field .iti input[type="number"] {
 }
 
 .revora-share-card-footer {
-  font-size: 18px;
+  font-size: 14.5px;
   font-weight: 500;
-  color: #475569;
+  color: #334155;
   text-align: center;
-  line-height: 1.4;
-  margin: 0 0 auto 0;
+  line-height: 1.5;
+  margin: 0 auto auto auto;
   font-style: italic;
+  max-width: 310px;
+}
+
+.revora-share-card-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 10px;
+  padding-bottom: 18px;
+  font-size: 13.5px;
+  width: 100%;
+  z-index: 5;
+}
+.revora-verified-icon {
+  font-size: 19px !important;
+  color: #10b981 !important;
+  line-height: 1;
 }

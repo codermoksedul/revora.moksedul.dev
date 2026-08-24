@@ -41,6 +41,7 @@ class Revora_Admin {
 		wp_enqueue_style( 'revora-google-material-symbols', 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200', array(), null );
 		wp_enqueue_style( 'wp-color-picker' );
 		wp_enqueue_style( 'revora-admin', REVORA_URL . 'assets/css/revora-admin.css', array( 'revora-google-material-symbols', 'wp-color-picker' ), REVORA_VERSION );
+		wp_enqueue_media();
 		wp_enqueue_script( 'revora-admin', REVORA_URL . 'assets/js/revora-admin.js', array( 'jquery', 'wp-color-picker' ), REVORA_VERSION, true );
 		
 		if ( 'revora_page_revora-forms' === $hook ) {
@@ -1887,9 +1888,27 @@ class Revora_Admin {
 									</div>
 
 									<div class="revora-field-group">
-										<label class="revora-field-label" for="revora_website_logo"><?php esc_html_e( 'Brand Logo URL', 'revora' ); ?></label>
-										<input type="url" name="revora_settings[website_logo]" id="revora_website_logo" value="<?php echo esc_url( $settings['website_logo'] ); ?>" class="regular-text" />
-										<p class="description"><?php esc_html_e( 'URL of your logo image. Used on the Share Card.', 'revora' ); ?></p>
+										<label class="revora-field-label" for="revora_website_logo"><?php esc_html_e( 'Brand Logo', 'revora' ); ?></label>
+										<div class="revora-media-upload-wrap" style="display:flex; align-items:center; gap:14px; margin-top:6px;">
+											<input type="hidden" name="revora_settings[website_logo]" id="revora_website_logo" value="<?php echo esc_url( $settings['website_logo'] ); ?>" />
+											<div id="revora-logo-preview" style="width:70px; height:50px; border:1px dashed #cbd5e1; border-radius:8px; display:flex; align-items:center; justify-content:center; background:#f8fafc; overflow:hidden; padding:4px; box-sizing:border-box;">
+												<?php if ( ! empty( $settings['website_logo'] ) ) : ?>
+													<img src="<?php echo esc_url( $settings['website_logo'] ); ?>" style="max-width:100%; max-height:100%; object-fit:contain;" />
+												<?php else : ?>
+													<span class="material-symbols-outlined" style="color:#94a3b8; font-size:24px;">image</span>
+												<?php endif; ?>
+											</div>
+											<div>
+												<button type="button" class="button button-secondary" id="revora-upload-logo-btn" style="display:inline-flex; align-items:center; gap:6px;">
+													<span class="dashicons dashicons-upload" style="margin:0;"></span>
+													<?php esc_html_e( 'Upload / Select Logo', 'revora' ); ?>
+												</button>
+												<button type="button" class="button" id="revora-remove-logo-btn" style="<?php echo empty( $settings['website_logo'] ) ? 'display:none;' : 'display:inline-block;'; ?> margin-left:6px; color:#dc2626; border-color:#fca5a5;">
+													<?php esc_html_e( 'Remove', 'revora' ); ?>
+												</button>
+											</div>
+										</div>
+										<p class="description"><?php esc_html_e( 'Upload your company/website logo. Displayed above the profile photo on the Share Card.', 'revora' ); ?></p>
 									</div>
 
 									<div class="revora-field-group">

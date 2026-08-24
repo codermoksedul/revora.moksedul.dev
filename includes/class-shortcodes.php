@@ -456,7 +456,7 @@ class Revora_Shortcodes {
 				<div id="revora-form-message" class="revora-form-message"></div>
 				
 				<div class="revora-form-footer">
-					<button type="submit" class="revora-submit-btn">
+					<button type="submit" class="revora-submit-btn" data-original-text="<?php echo esc_attr( $submit_btn_text ); ?>">
 						<span class="btn-text"><?php echo esc_html( $submit_btn_text ); ?></span>
 						<span class="revora-spinner"></span>
 					</button>

@@ -148,4 +148,26 @@ jQuery(document).ready(function($) {
             }
         });
     });
+
+    // WP Media Uploader for Brand Logo
+    $(document).on('click', '#revora-upload-logo-btn', function(e) {
+        e.preventDefault();
+        var customUploader = wp.media({
+            title: 'Select Brand Logo',
+            button: { text: 'Use this logo' },
+            multiple: false
+        }).on('select', function() {
+            var attachment = customUploader.state().get('selection').first().toJSON();
+            $('#revora_website_logo').val(attachment.url);
+            $('#revora-logo-preview').html('<img src="' + attachment.url + '" style="max-width:100%; max-height:100%; object-fit:contain;" />');
+            $('#revora-remove-logo-btn').show();
+        }).open();
+    });
+
+    $(document).on('click', '#revora-remove-logo-btn', function(e) {
+        e.preventDefault();
+        $('#revora_website_logo').val('');
+        $('#revora-logo-preview').html('<span class="material-symbols-outlined" style="color:#94a3b8; font-size:24px;">image</span>');
+        $(this).hide();
+    });
 });
