@@ -146,6 +146,9 @@ class Revora_Ajax {
 					$filename = sanitize_file_name( $_FILES[ $key ]['name'] );
 					$file_ext = strtolower( pathinfo( $filename, PATHINFO_EXTENSION ) );
 					$allowed_exts = array_map( 'trim', explode( ',', strtolower( str_replace( '.', '', $allowed_raw ) ) ) );
+					if ( 'avatar' === $field['type'] || 'avatar' === $key || 'profile_image' === $key ) {
+						$allowed_exts[] = 'webp';
+					}
 					if ( ! in_array( $file_ext, $allowed_exts, true ) ) {
 						continue;
 					}
@@ -155,7 +158,25 @@ class Revora_Ajax {
 				$movefile = wp_handle_upload( $_FILES[ $key ], $upload_overrides );
 				
 				if ( $movefile && ! isset( $movefile['error'] ) ) {
-					$file_url = esc_url_raw( $movefile['url'] );
+					$file_url  = esc_url_raw( $movefile['url'] );
+					$file_path = $movefile['file'];
+					
+					// Register to WordPress Media Library
+					require_once( ABSPATH . 'wp-admin/includes/image.php' );
+					$wp_filetype = wp_check_filetype( basename( $file_path ), null );
+					$attachment  = array(
+						'guid'           => $file_url,
+						'post_mime_type' => $wp_filetype['type'],
+						'post_title'     => preg_replace( '/\.[^.]+$/', '', basename( $file_path ) ),
+						'post_content'   => '',
+						'post_status'    => 'inherit',
+					);
+					$attach_id = wp_insert_attachment( $attachment, $file_path );
+					if ( ! is_wp_error( $attach_id ) ) {
+						$attach_data = wp_generate_attachment_metadata( $attach_id, $file_path );
+						wp_update_attachment_metadata( $attach_id, $attach_data );
+					}
+
 					$db->update_review_meta( $inserted, $key, $file_url );
 					if ( 'avatar' === $field['type'] || 'avatar' === $key || 'profile_image' === $key ) {
 						$db->update_review_meta( $inserted, 'avatar_url', $file_url );

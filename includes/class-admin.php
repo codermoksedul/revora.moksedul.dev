@@ -1611,19 +1611,37 @@ class Revora_Admin {
 				echo '<label><input type="checkbox" name="' . $field_name . '[]" value="' . esc_attr( $opt ) . '" ' . ( in_array( $opt, $selected_vals, true ) ? 'checked' : '' ) . '> ' . esc_html( $opt ) . '</label>';
 			}
 			echo '</div>';
-		} elseif ( 'file' === $type ) {
+		} elseif ( 'file' === $type || 'avatar' === $type || 'avatar' === $key || 'profile_image' === $key || false !== strpos( $key, 'avatar' ) || false !== strpos( $key, 'image' ) ) {
+			echo '<div class="revora-admin-avatar-field-wrap" style="display:flex; align-items:center; gap:16px; margin-top:6px; padding:12px 16px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; max-width:540px;">';
+			
 			if ( ! empty( $val ) ) {
-				echo '<div style="margin-bottom:8px;">';
-				if ( preg_match( '/\.(jpg|jpeg|png|gif|webp)$/i', $val ) ) {
-					echo '<img src="' . esc_url( $val ) . '" style="max-height:80px; border-radius:4px; display:block; margin-bottom:5px;">';
-				}
-				echo '<a href="' . esc_url( $val ) . '" target="_blank" class="button button-small">' . esc_html__( 'View Current File', 'revora' ) . '</a>';
+				echo '<div class="revora-admin-avatar-preview" style="position:relative; flex-shrink:0;">';
+				echo '<img src="' . esc_url( $val ) . '" alt="Avatar" style="width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid #3b82f6; box-shadow:0 4px 10px rgba(0,0,0,0.08); display:block;">';
+				echo '</div>';
+				
+				echo '<div style="flex:1; min-width:0;">';
+				echo '<div style="font-size:13px; font-weight:600; color:#0f172a; margin-bottom:4px; word-break:break-all;">' . esc_html( basename( parse_url( $val, PHP_URL_PATH ) ) ) . '</div>';
+				echo '<div style="display:flex; align-items:center; gap:10px; margin-top:4px;">';
+				echo '<a href="' . esc_url( $val ) . '" target="_blank" class="button button-secondary button-small" style="display:inline-flex; align-items:center; gap:4px;"><span class="dashicons dashicons-external" style="font-size:14px; width:14px; height:14px; line-height:14px; margin-top:2px;"></span>' . esc_html__( 'View Full Image', 'revora' ) . '</a>';
+				echo '</div>';
+				echo '</div>';
+			} else {
+				echo '<div style="width:50px; height:50px; border-radius:50%; background:#e2e8f0; display:flex; align-items:center; justify-content:center; color:#94a3b8; flex-shrink:0;">';
+				echo '<span class="dashicons dashicons-format-image" style="font-size:24px; width:24px; height:24px;"></span>';
+				echo '</div>';
+				echo '<div style="flex:1;">';
+				echo '<div style="font-size:13px; color:#64748b;">' . esc_html__( 'No image uploaded yet', 'revora' ) . '</div>';
 				echo '</div>';
 			}
-			echo '<input type="file" name="meta_file_' . esc_attr( $key ) . '" id="meta_' . esc_attr( $key ) . '">';
+			
+			echo '</div>';
+			echo '<div style="margin-top:10px;">';
+			echo '<label style="font-size:12px; color:#64748b; display:block; margin-bottom:4px;">' . ( ! empty( $val ) ? esc_html__( 'Upload replacement image:', 'revora' ) : esc_html__( 'Choose image to upload:', 'revora' ) ) . '</label>';
+			echo '<input type="file" name="meta_file_' . esc_attr( $key ) . '" id="meta_' . esc_attr( $key ) . '" accept="image/*">';
 			if ( ! empty( $val ) ) {
 				echo '<input type="hidden" name="' . $field_name . '" value="' . esc_attr( $val ) . '">';
 			}
+			echo '</div>';
 		} else {
 			// text, email, number, tel, url, date, etc.
 			echo '<input type="' . esc_attr( $type ) . '" name="' . $field_name . '" id="meta_' . esc_attr( $key ) . '" value="' . esc_attr( $val ) . '" placeholder="' . esc_attr( $placeholder ) . '">';
@@ -2095,8 +2113,8 @@ class Revora_Review_List_Table extends WP_List_Table {
 	public function get_columns() {
 		return array(
 			'cb'         => '<input type="checkbox" />',
+			'customer'   => __( 'Customer', 'revora' ),
 			'content'    => __( 'Review', 'revora' ),
-			'customer'   => __( 'Customer Info', 'revora' ),
 			'form'       => __( 'Form', 'revora' ),
 			'status'     => __( 'Status', 'revora' ),
 			'created_at' => __( 'Date', 'revora' ),
@@ -2132,7 +2150,7 @@ class Revora_Review_List_Table extends WP_List_Table {
 		);
 
 		// Star Rating with Google Material Symbols
-		$stars = '<div class="revora-admin-stars" style="margin-bottom: 3px;">';
+		$stars = '<div class="revora-admin-stars" style="margin-bottom: 4px;">';
 		$r_val = floatval( $item->rating );
 		for ( $i = 1; $i <= 5; $i++ ) {
 			if ( $r_val >= $i ) {
@@ -2145,11 +2163,20 @@ class Revora_Review_List_Table extends WP_List_Table {
 		}
 		$stars .= '<span class="revora-admin-rating-badge">' . number_format( $r_val, 1 ) . '</span>';
 		$stars .= '</div>';
-		$display_name = ! empty( $item->name ) ? $item->name : ( ! empty( $item->title ) ? $item->title : __( 'Anonymous', 'revora' ) );
 
-		return sprintf( '%s<div class="revora-table-review-title"><strong>%s</strong></div>%s',
+		$review_text = ! empty( $item->content ) ? $item->content : ( ! empty( $item->title ) ? $item->title : '' );
+		if ( mb_strlen( $review_text ) > 120 ) {
+			$review_text = mb_substr( $review_text, 0, 120 ) . '...';
+		}
+
+		$text_html = '';
+		if ( ! empty( $review_text ) ) {
+			$text_html = sprintf( '<div class="revora-table-review-text" style="font-size:13px; color:#334155; margin-top:2px; margin-bottom:4px; line-height:1.4; max-width:400px;">%s</div>', esc_html( $review_text ) );
+		}
+
+		return sprintf( '%s%s%s',
 			$stars,
-			esc_html( $display_name ),
+			$text_html,
 			$this->row_actions( $actions )
 		);
 	}
@@ -2167,14 +2194,28 @@ class Revora_Review_List_Table extends WP_List_Table {
 			}
 		}
 
+		$avatar_url = '';
+		if ( is_array( $meta ) ) {
+			$avatar_url = $meta['avatar_url'] ?? ( $meta['avatar'] ?? ( $meta['profile_image'] ?? '' ) );
+		}
+
+		$first_letter = ! empty( $item->name ) ? mb_substr( trim( $item->name ), 0, 1 ) : 'U';
+
 		$output = '<div class="revora-customer-cell">';
-		$output .= sprintf( '<strong class="revora-customer-name">%s</strong>', esc_html( $item->name ) );
+		if ( ! empty( $avatar_url ) ) {
+			$output .= sprintf( '<img src="%s" alt="%s" class="revora-customer-avatar-img">', esc_url( $avatar_url ), esc_attr( $item->name ) );
+		} else {
+			$output .= sprintf( '<div class="revora-customer-avatar-initial">%s</div>', esc_html( $first_letter ) );
+		}
+		$output .= '<div class="revora-customer-info">';
+		$output .= sprintf( '<strong class="revora-customer-name">%s</strong>', esc_html( ! empty( $item->name ) ? $item->name : __( 'Anonymous', 'revora' ) ) );
 		if ( ! empty( $item->email ) ) {
-			$output .= sprintf( '<small class="revora-customer-email">%s</small>', esc_html( $item->email ) );
+			$output .= sprintf( '<span class="revora-customer-email">%s</span>', esc_html( $item->email ) );
 		}
 		if ( ! empty( $phone ) ) {
-			$output .= sprintf( '<small class="revora-customer-phone"><span class="material-symbols-outlined revora-phone-icon">call</span> %s</small>', esc_html( $phone ) );
+			$output .= sprintf( '<span class="revora-customer-phone"><span class="material-symbols-outlined revora-phone-icon">call</span> %s</span>', esc_html( $phone ) );
 		}
+		$output .= '</div>';
 		$output .= '</div>';
 
 		return $output;

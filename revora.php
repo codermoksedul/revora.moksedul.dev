@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define Constants
-define( 'REVORA_VERSION', '2.1.33' );
+define( 'REVORA_VERSION', '2.1.49' );
 define( 'REVORA_PATH', plugin_dir_path( __FILE__ ) );
 define( 'REVORA_URL', plugin_dir_url( __FILE__ ) );
 define( 'REVORA_INC', REVORA_PATH . 'includes/' );
@@ -133,14 +133,16 @@ class Revora {
 	 * Enqueue Frontend Assets
 	 */
 	public function enqueue_frontend_assets() {
+		wp_enqueue_style( 'revora-cropper', 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css', array(), '1.5.13' );
 		wp_enqueue_style( 'revora-google-material-symbols', 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200', array(), null );
 		wp_enqueue_style( 'revora-intl-tel-input', 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.21/css/intlTelInput.css', array(), null );
 		wp_enqueue_style( 'dashicons' );
-		wp_enqueue_style( 'revora-frontend', REVORA_URL . 'assets/css/revora-frontend.css', array( 'dashicons', 'revora-google-material-symbols', 'revora-intl-tel-input' ), REVORA_VERSION );
+		wp_enqueue_style( 'revora-frontend', REVORA_URL . 'assets/css/revora-frontend.css', array( 'dashicons', 'revora-google-material-symbols', 'revora-intl-tel-input', 'revora-cropper' ), REVORA_VERSION );
 		wp_enqueue_style( 'revora-card-variants', REVORA_URL . 'assets/css/revora-card-variants.css', array(), REVORA_VERSION );
 		
+		wp_enqueue_script( 'revora-cropper', 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js', array(), '1.5.13', true );
 		wp_enqueue_script( 'revora-intl-tel-input', 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.21/js/intlTelInput.min.js', array(), null, true );
-		wp_enqueue_script( 'revora-frontend', REVORA_URL . 'assets/js/revora-frontend.js', array( 'jquery', 'revora-intl-tel-input' ), REVORA_VERSION, true );
+		wp_enqueue_script( 'revora-frontend', REVORA_URL . 'assets/js/revora-frontend.js', array( 'jquery', 'revora-intl-tel-input', 'revora-cropper' ), REVORA_VERSION, true );
 		
 		wp_localize_script( 'revora-frontend', 'revora_vars', array(
 			'ajax_url' => admin_url( 'admin-ajax.php' ),

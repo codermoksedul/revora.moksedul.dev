@@ -290,12 +290,37 @@ jQuery(document).ready(function($) {
 
         const $form = $(this);
         const $submitBtn = $form.find('.revora-submit-btn');
-        var originalBtnText = $submitBtn.attr('data-original-text') || $submitBtn.find('.btn-text').text() || 'Submit Review';
-        if (originalBtnText === 'Submitting...' || originalBtnText === 'Loading...' || !originalBtnText.trim()) {
+        var originalBtnText = $submitBtn.attr('data-original-text') || $submitBtn.find('.btn-text').text() || $submitBtn.text() || 'Submit Review';
+        originalBtnText = originalBtnText.trim();
+        if (originalBtnText === 'Submitting...' || originalBtnText === 'Loading...' || !originalBtnText) {
             originalBtnText = 'Submit Review';
         }
         $submitBtn.attr('data-original-text', originalBtnText);
         const $message = $form.find('.revora-form-message');
+
+        function setSubmitBtnState(isLoading) {
+            var orig = $submitBtn.attr('data-original-text') || originalBtnText || 'Submit Review';
+            if (orig === 'Submitting...' || orig === 'Loading...' || !orig.trim()) {
+                orig = 'Submit Review';
+            }
+            if (isLoading) {
+                $submitBtn.prop('disabled', true);
+                if ($submitBtn.find('.btn-text').length) {
+                    $submitBtn.find('.btn-text').text('Submitting...');
+                } else {
+                    $submitBtn.html('<span class="btn-text">Submitting...</span><span class="revora-spinner"></span>');
+                }
+                $submitBtn.find('.revora-spinner').show();
+            } else {
+                $submitBtn.prop('disabled', false);
+                if ($submitBtn.find('.btn-text').length) {
+                    $submitBtn.find('.btn-text').text(orig);
+                } else {
+                    $submitBtn.html('<span class="btn-text">' + orig + '</span><span class="revora-spinner" style="display:none;"></span>');
+                }
+                $submitBtn.find('.revora-spinner').hide();
+            }
+        }
         
         // Manual Validation for Rating
         var $ratingInput = $form.find('.revora-frontend-rating-val');
@@ -340,11 +365,18 @@ jQuery(document).ready(function($) {
 
         const formData = new FormData(this);
 
+        // Append cropped blobs if present
+        $form.find('input[type="file"]').each(function() {
+            var croppedBlob = $(this).data('cropped-blob');
+            var inputName = $(this).attr('name');
+            if (croppedBlob && inputName) {
+                formData.set(inputName, croppedBlob, 'avatar.webp');
+            }
+        });
+
         formData.append('action', 'revora_submit');
 
-        $submitBtn.prop('disabled', true);
-        $submitBtn.find('.btn-text').text('Submitting...');
-        $submitBtn.find('.revora-spinner').show();
+        setSubmitBtnState(true);
         $message.hide().removeClass('success error');
 
         $.ajax({
@@ -354,26 +386,25 @@ jQuery(document).ready(function($) {
             processData: false,
             contentType: false,
             success: function(response) {
-                var resetText = $submitBtn.attr('data-original-text') || originalBtnText || 'Submit Review';
-                if (resetText === 'Submitting...' || resetText === 'Loading...' || !resetText.trim()) {
-                    resetText = 'Submit Review';
-                }
-                $submitBtn.prop('disabled', false);
-                $submitBtn.find('.btn-text').text(resetText);
-                $submitBtn.find('.revora-spinner').hide();
+                setSubmitBtnState(false);
 
                 if (response.success) {
                     var successMsg = (response.data && response.data.message) ? response.data.message : 'Thank you! Your review has been submitted successfully.';
                     $message.html('<span class="material-symbols-outlined">check_circle</span> ' + successMsg).removeClass('error').addClass('success').fadeIn();
                     
                     var avatarDataUrl = '';
-                    var $avatarInput = $form.find('input[type="file"][name="profile_image"], input[type="file"][name="avatar"]');
-                    if ( $avatarInput.length && $avatarInput[0].files && $avatarInput[0].files.length > 0 ) {
-                        avatarDataUrl = URL.createObjectURL($avatarInput[0].files[0]);
+                    var $avatarInput = $form.find('input[type="file"][name="profile_image"], input[type="file"][name="avatar"], input[type="file"].revora-file-input');
+                    if ( $avatarInput.length ) {
+                        if ( $avatarInput.data('cropped-url') ) {
+                            avatarDataUrl = $avatarInput.data('cropped-url');
+                        } else if ( $avatarInput[0].files && $avatarInput[0].files.length > 0 ) {
+                            avatarDataUrl = URL.createObjectURL($avatarInput[0].files[0]);
+                        }
                     }
                     
                     $form[0].reset();
-                    // Reset custom file input text
+                    // Reset custom file input text and data
+                    $form.find('input[type="file"]').removeData('cropped-url').removeData('cropped-blob');
                     $form.find('.revora-file-text').each(function() {
                         var originalText = $(this).data('placeholder') || 'Choose file...';
                         $(this).text(originalText);
@@ -392,23 +423,11 @@ jQuery(document).ready(function($) {
                 }
             },
             error: function() {
-                var resetText = $submitBtn.attr('data-original-text') || originalBtnText || 'Submit Review';
-                if (resetText === 'Submitting...' || resetText === 'Loading...' || !resetText.trim()) {
-                    resetText = 'Submit Review';
-                }
-                $submitBtn.prop('disabled', false);
-                $submitBtn.find('.btn-text').text(resetText);
-                $submitBtn.find('.revora-spinner').hide();
+                setSubmitBtnState(false);
                 $message.addClass('error').html('<span class="material-symbols-outlined">error</span> Server error. Please try again later.').fadeIn();
             },
             complete: function() {
-                var resetText = $submitBtn.attr('data-original-text') || originalBtnText || 'Submit Review';
-                if (resetText === 'Submitting...' || resetText === 'Loading...' || !resetText.trim()) {
-                    resetText = 'Submit Review';
-                }
-                $submitBtn.prop('disabled', false);
-                $submitBtn.find('.btn-text').text(resetText);
-                $submitBtn.find('.revora-spinner').hide();
+                setSubmitBtnState(false);
             }
         });
     });
@@ -429,25 +448,24 @@ jQuery(document).ready(function($) {
 
         $btn.prop('disabled', true);
         $btn.find('.btn-text').text('Loading...');
+        $btn.find('.revora-spinner').show();
 
         $.ajax({
             url: revora_vars.ajax_url,
             type: 'POST',
             data: {
                 action: 'revora_load_more',
-                nonce: revora_vars.nonce,
                 form_id: form_id,
                 category: category,
-                page: page,
-                initial_limit: limit,
+                page: page + 1,
                 limit: load_more_limit,
-                card_style: card_style
+                card_style: card_style,
+                nonce: revora_vars.nonce
             },
             success: function(response) {
-                if (response.success) {
+                if (response.success && response.data.html) {
                     $grid.append(response.data.html);
-                    page++;
-                    $btn.data('page', page);
+                    $btn.data('page', page + 1);
 
                     if (!response.data.has_more) {
                         $btn.parent().fadeOut();
@@ -457,104 +475,56 @@ jQuery(document).ready(function($) {
                 }
             },
             error: function() {
-                alert('Error loading more reviews. Please try again.');
+                $btn.parent().fadeOut();
             },
             complete: function() {
                 $btn.prop('disabled', false);
-                $btn.find('.btn-text').text('Load More Reviews');
+                $btn.find('.btn-text').text('Load More');
+                $btn.find('.revora-spinner').hide();
             }
         });
     });
+
     /**
      * Initialize Swiper Sliders
      */
     function initRevoraSliders() {
-        // Standard Reviews Slider
-        $('.revora-slider-widget-container').each(function() {
+        if (typeof Swiper === 'undefined') return;
+
+        $('.revora-slider-container').each(function() {
             const $container = $(this);
-            const $slider = $container.find('.revora-reviews-slider');
-            const settings = $container.data('slider-settings');
+            if ($container.hasClass('swiper-initialized')) return;
 
-            if (!$slider.length || !settings) return;
-            if ($slider.hasClass('swiper-initialized')) return;
+            const autoplay = $container.data('autoplay') === 'yes';
+            const speed = parseInt($container.data('speed')) || 3000;
+            const loop = $container.data('loop') === 'yes';
+            const slidesPerView = parseInt($container.data('slides-per-view')) || 3;
+            const spaceBetween = parseInt($container.data('space-between')) || 24;
 
-            const swiperOptions = {
-                slidesPerView: settings.slidesPerView || 1,
-                slidesPerGroup: settings.slidesToScroll || 1,
-                spaceBetween: settings.spaceBetween || 24,
-                loop: settings.loop,
-                speed: settings.speed || 500,
-                effect: settings.effect || 'slide',
-                autoplay: settings.autoplay ? {
-                    delay: settings.autoplaySpeed || 3000,
-                    disableOnInteraction: false,
-                    pauseOnHover: settings.pauseOnHover
-                } : false,
-                navigation: settings.showArrows ? {
+            new Swiper(this, {
+                slidesPerView: 1,
+                spaceBetween: 16,
+                loop: loop,
+                autoplay: autoplay ? { delay: speed, disableOnInteraction: false } : false,
+                pagination: {
+                    el: $container.find('.swiper-pagination')[0],
+                    clickable: true,
+                },
+                navigation: {
                     nextEl: $container.find('.swiper-button-next')[0],
                     prevEl: $container.find('.swiper-button-prev')[0],
-                } : false,
-                pagination: settings.showPagination ? {
-                    el: $container.find('.swiper-pagination')[0],
-                    type: settings.paginationType || 'bullets',
-                    clickable: true
-                } : false,
+                },
                 breakpoints: {
-                    // Mobile
-                    320: {
-                        slidesPerView: settings.slidesToShowMobile || 1,
-                        spaceBetween: settings.spaceBetweenMobile || 16
+                    640: {
+                        slidesPerView: Math.min(2, slidesPerView),
+                        spaceBetween: spaceBetween,
                     },
-                    // Tablet
-                    768: {
-                        slidesPerView: settings.slidesToShowTablet || 2,
-                        spaceBetween: settings.spaceBetweenTablet || 20
-                    },
-                    // Desktop
                     1024: {
-                        slidesPerView: settings.slidesPerView || 3,
-                        spaceBetween: settings.spaceBetween || 24
+                        slidesPerView: slidesPerView,
+                        spaceBetween: spaceBetween,
                     }
                 }
-            };
-
-            new Swiper($slider[0], swiperOptions);
-        });
-
-        // Featured Review Slider / Loop
-        $('.revora-featured-widget-wrap').each(function() {
-            const $container = $(this);
-            const $slider = $container.find('.revora-featured-slider');
-            const settings = $container.data('slider-settings');
-
-            if (!$slider.length || !settings) return;
-            if ($slider.hasClass('swiper-initialized')) return;
-
-            const swiperOptions = {
-                slidesPerView: 1,
-                spaceBetween: settings.spaceBetween || 20,
-                loop: settings.loop || false,
-                speed: settings.speed || 600,
-                effect: settings.effect || 'fade',
-                fadeEffect: {
-                    crossFade: true
-                },
-                autoplay: settings.autoplay ? {
-                    delay: settings.autoplaySpeed || 5000,
-                    disableOnInteraction: false,
-                    pauseOnHover: settings.pauseOnHover
-                } : false,
-                navigation: settings.showArrows ? {
-                    nextEl: $container.find('.swiper-button-next')[0],
-                    prevEl: $container.find('.swiper-button-prev')[0],
-                } : false,
-                pagination: settings.showPagination ? {
-                    el: $container.find('.swiper-pagination')[0],
-                    clickable: true
-                } : false
-            };
-
-            new Swiper($slider[0], swiperOptions);
+            });
         });
     }
 
@@ -573,28 +543,300 @@ jQuery(document).ready(function($) {
         }
     });
 
-    // Custom File Input Sync
+    /* ==========================================================================
+       Image Cropper Modal & WebP Compression Logic
+       ========================================================================== */
+    var revoraCropper = null;
+    var $activeCropInput = null;
+
+    function ensureCropperModal() {
+        var $modal = $('#revora-cropper-modal');
+        if ( ! $modal.length ) {
+            var cropperHtml = `
+                <div id="revora-cropper-modal" class="revora-modal-overlay">
+                    <div class="revora-cropper-modal-content">
+                        <div class="revora-cropper-header">
+                            <div class="revora-cropper-title-wrap">
+                                <div class="revora-cropper-icon-box">
+                                    <span class="material-symbols-outlined">crop</span>
+                                </div>
+                                <div class="revora-cropper-title-text">
+                                    <h3>Crop Profile Photo</h3>
+                                    <p>Position and adjust your avatar photo</p>
+                                </div>
+                            </div>
+                            <button type="button" class="revora-cropper-close-btn" id="revora-cropper-close" title="Close">
+                                <span class="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
+                        <div class="revora-cropper-body">
+                            <div class="revora-cropper-img-container">
+                                <img id="revora-cropper-image" src="" alt="Crop Preview" />
+                            </div>
+                            <div class="revora-cropper-toolbar">
+                                <button type="button" class="revora-crop-tool-btn" id="revora-crop-zoom-in" title="Zoom In">
+                                    <span class="material-symbols-outlined">zoom_in</span>
+                                </button>
+                                <button type="button" class="revora-crop-tool-btn" id="revora-crop-zoom-out" title="Zoom Out">
+                                    <span class="material-symbols-outlined">zoom_out</span>
+                                </button>
+                                <div class="revora-crop-tool-sep"></div>
+                                <button type="button" class="revora-crop-tool-btn" id="revora-crop-rotate-left" title="Rotate Left 90°">
+                                    <span class="material-symbols-outlined">rotate_left</span>
+                                </button>
+                                <button type="button" class="revora-crop-tool-btn" id="revora-crop-rotate-right" title="Rotate Right 90°">
+                                    <span class="material-symbols-outlined">rotate_right</span>
+                                </button>
+                                <div class="revora-crop-tool-sep"></div>
+                                <button type="button" class="revora-crop-tool-btn" id="revora-crop-reset" title="Reset">
+                                    <span class="material-symbols-outlined">restart_alt</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="revora-cropper-footer">
+                            <button type="button" class="revora-crop-cancel-btn" id="revora-crop-cancel">Cancel</button>
+                            <button type="button" class="revora-crop-apply-btn" id="revora-crop-apply">
+                                <span class="material-symbols-outlined">check</span>
+                                <span>Crop & Save</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $('body').append(cropperHtml);
+            $modal = $('#revora-cropper-modal');
+            
+            // Toolbar handlers
+            $(document).on('click', '#revora-crop-zoom-in', function(e) {
+                e.preventDefault();
+                if (revoraCropper) revoraCropper.zoom(0.1);
+            });
+            $(document).on('click', '#revora-crop-zoom-out', function(e) {
+                e.preventDefault();
+                if (revoraCropper) revoraCropper.zoom(-0.1);
+            });
+            $(document).on('click', '#revora-crop-rotate-left', function(e) {
+                e.preventDefault();
+                if (revoraCropper) revoraCropper.rotate(-90);
+            });
+            $(document).on('click', '#revora-crop-rotate-right', function(e) {
+                e.preventDefault();
+                if (revoraCropper) revoraCropper.rotate(90);
+            });
+            $(document).on('click', '#revora-crop-reset', function(e) {
+                e.preventDefault();
+                if (revoraCropper) {
+                    revoraCropper.reset();
+                }
+            });
+            $(document).on('click', '#revora-crop-cancel, #revora-cropper-close', function(e) {
+                e.preventDefault();
+                closeCropperModal();
+            });
+            $(document).on('click', '#revora-crop-apply', function(e) {
+                e.preventDefault();
+                applyCroppedImage();
+            });
+        }
+        return $modal;
+    }
+
+    function openCropperModal(imageSrc, $input) {
+        $activeCropInput = $input;
+        var $modal = ensureCropperModal();
+        
+        if (revoraCropper) {
+            revoraCropper.destroy();
+            revoraCropper = null;
+        }
+
+        var $container = $modal.find('.revora-cropper-img-container');
+        $container.html('<img id="revora-cropper-image" src="' + imageSrc + '" alt="Crop Preview" />');
+        var imageEl = document.getElementById('revora-cropper-image');
+        
+        $modal.addClass('active');
+
+        function startCropper() {
+            if (typeof Cropper === 'undefined') return;
+            if (revoraCropper) {
+                revoraCropper.destroy();
+                revoraCropper = null;
+            }
+            revoraCropper = new Cropper(imageEl, {
+                aspectRatio: 1,
+                viewMode: 0,
+                dragMode: 'move',
+                autoCropArea: 0.8,
+                restore: false,
+                guides: true,
+                center: true,
+                highlight: false,
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                movable: true,
+                zoomable: true,
+                zoomOnTouch: true,
+                zoomOnWheel: true,
+                wheelZoomRatio: 0.1,
+                toggleDragModeOnDblclick: false,
+                responsive: true,
+                checkOrientation: false,
+                background: true
+            });
+        }
+
+        function loadAndStart() {
+            if (typeof Cropper === 'undefined') {
+                $.getScript('https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js', function() {
+                    setTimeout(startCropper, 100);
+                });
+            } else {
+                setTimeout(startCropper, 100);
+            }
+        }
+
+        if (imageEl.complete) {
+            loadAndStart();
+        } else {
+            imageEl.onload = loadAndStart;
+        }
+    }
+
+    function closeCropperModal() {
+        var $modal = $('#revora-cropper-modal');
+        $modal.removeClass('active');
+        if (revoraCropper) {
+            revoraCropper.destroy();
+            revoraCropper = null;
+        }
+        if ($activeCropInput && !$activeCropInput.data('cropped-url')) {
+            $activeCropInput.val('');
+            var $text = $activeCropInput.siblings('.revora-file-fake').find('.revora-file-text');
+            var orig = $text.data('placeholder') || 'Choose file...';
+            $text.text(orig);
+        }
+    }
+
+    function applyCroppedImage() {
+        if (!revoraCropper || !$activeCropInput) {
+            closeCropperModal();
+            return;
+        }
+        
+        var $applyBtn = $('#revora-crop-apply');
+        $applyBtn.prop('disabled', true).find('span:last').text('Processing...');
+        
+        var canvas = revoraCropper.getCroppedCanvas({
+            width: 512,
+            height: 512,
+            minWidth: 256,
+            minHeight: 256,
+            maxWidth: 512,
+            maxHeight: 512,
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high'
+        });
+        
+        if (!canvas) {
+            $applyBtn.prop('disabled', false).find('span:last').text('Crop & Save');
+            closeCropperModal();
+            return;
+        }
+        
+        function handleBlob(blob) {
+            if (!blob) {
+                $applyBtn.prop('disabled', false).find('span:last').text('Crop & Save');
+                closeCropperModal();
+                return;
+            }
+            
+            var webpFile;
+            try {
+                webpFile = new File([blob], 'avatar.webp', { type: blob.type || 'image/webp' });
+            } catch(e) {
+                webpFile = blob;
+                webpFile.name = 'avatar.webp';
+            }
+            webpFile._revoraCropped = true;
+            
+            if (window.DataTransfer) {
+                var dt = new DataTransfer();
+                dt.items.add(webpFile);
+                $activeCropInput[0].files = dt.files;
+            }
+            
+            var objectUrl = URL.createObjectURL(blob);
+            $activeCropInput.data('cropped-url', objectUrl);
+            $activeCropInput.data('cropped-blob', blob);
+            
+            var sizeKB = Math.round(blob.size / 1024);
+            var $fakeWrap = $activeCropInput.siblings('.revora-file-fake');
+            var $text = $fakeWrap.find('.revora-file-text');
+            $text.html('<img src="' + objectUrl + '" class="revora-file-thumb-badge" alt="Avatar"/> avatar.webp (' + sizeKB + ' KB)');
+            
+            $applyBtn.prop('disabled', false).find('span:last').text('Crop & Save');
+            closeCropperModal();
+        }
+        
+        if (canvas.toBlob) {
+            canvas.toBlob(function(blob) {
+                if (blob && blob.size > 0) {
+                    handleBlob(blob);
+                } else {
+                    canvas.toBlob(handleBlob, 'image/jpeg', 0.85);
+                }
+            }, 'image/webp', 0.85);
+        } else {
+            var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            var arr = dataUrl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+                bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+            while(n--){
+                u8arr[n] = bstr.charCodeAt(n);
+            }
+            handleBlob(new Blob([u8arr], {type:mime}));
+        }
+    }
+
+    // Custom File Input Sync & Image Cropper Trigger
     $(document).on('change', '.revora-file-input', function() {
         var $this = $(this);
         var $form = $this.closest('form');
         var $message = $form.find('.revora-form-message');
         
-        // Immediate File Size Validation (1MB)
         if (this.files && this.files.length > 0) {
-            if (this.files[0].size > 1048576) {
-                $this.val(''); // Clear the input
-                $message.html('<span class="material-symbols-outlined">error</span> File size exceeds the 1MB limit. Please choose a smaller image.').removeClass('success').addClass('error').fadeIn();
-                
-                // Reset fake text to placeholder
+            var file = this.files[0];
+            
+            // If already cropped programmatically, just update label and exit
+            if (file._revoraCropped) {
+                return;
+            }
+            
+            var isImage = file.type && file.type.indexOf('image/') === 0;
+            if (!isImage && file.name) {
+                var ext = file.name.split('.').pop().toLowerCase();
+                isImage = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'avif', 'heic'].indexOf(ext) !== -1;
+            }
+            
+            // For images (Avatar / Profile Photo): Open interactive cropper popup
+            if (isImage) {
+                if (window.FileReader) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        openCropperModal(e.target.result, $this);
+                    };
+                    reader.readAsDataURL(file);
+                    return;
+                }
+            }
+            
+            // Non-image files: check 1MB limit
+            if (file.size > 1048576) {
+                $this.val('');
+                $message.html('<span class="material-symbols-outlined">error</span> File size exceeds the 1MB limit. Please choose a smaller file.').removeClass('success').addClass('error').fadeIn();
                 var $text = $this.siblings('.revora-file-fake').find('.revora-file-text');
                 var originalText = $text.data('placeholder') || 'Choose file...';
                 $text.text(originalText);
                 return;
-            } else {
-                // Clear any previous error if valid
-                if ($message.hasClass('error') && $message.text().indexOf('File size') !== -1) {
-                    $message.fadeOut();
-                }
             }
         }
         
@@ -604,12 +846,7 @@ jQuery(document).ready(function($) {
         if (fileName) {
             $text.text(fileName);
         } else {
-            // Revert to placeholder if no file
-            var originalText = $text.data('placeholder');
-            if (!originalText) {
-                originalText = 'Choose file...';
-                $text.data('placeholder', originalText);
-            }
+            var originalText = $text.data('placeholder') || 'Choose file...';
             $text.text(originalText);
         }
     });
