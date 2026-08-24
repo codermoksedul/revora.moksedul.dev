@@ -297,6 +297,7 @@ jQuery(document).ready(function($) {
         }
         $submitBtn.attr('data-original-text', originalBtnText);
         const $message = $form.find('.revora-form-message');
+        $message.hide().removeClass('success error');
 
         function setSubmitBtnState(isLoading) {
             var orig = $submitBtn.attr('data-original-text') || originalBtnText || 'Submit Review';
@@ -325,6 +326,7 @@ jQuery(document).ready(function($) {
         // Manual Validation for Rating
         var $ratingInput = $form.find('.revora-frontend-rating-val');
         if ( $ratingInput.length && $ratingInput.attr('required') && parseFloat($ratingInput.val()) === 0 ) {
+            setSubmitBtnState(false);
             $message.html('<span class="material-symbols-outlined">error</span> Please select a star rating.').removeClass('success').addClass('error').fadeIn();
             return;
         }
@@ -344,6 +346,7 @@ jQuery(document).ready(function($) {
         });
         
         if (!isValidPhone) {
+            setSubmitBtnState(false);
             $message.html('<span class="material-symbols-outlined">error</span> Please enter a valid phone number.').removeClass('success').addClass('error').fadeIn();
             return;
         }
@@ -359,6 +362,7 @@ jQuery(document).ready(function($) {
         });
         
         if (!isFileSizeValid) {
+            setSubmitBtnState(false);
             $message.html('<span class="material-symbols-outlined">error</span> File size exceeds the 1MB limit. Please choose a smaller image.').removeClass('success').addClass('error').fadeIn();
             return;
         }
@@ -377,7 +381,6 @@ jQuery(document).ready(function($) {
         formData.append('action', 'revora_submit');
 
         setSubmitBtnState(true);
-        $message.hide().removeClass('success error');
 
         $.ajax({
             url: revora_vars.ajax_url,
